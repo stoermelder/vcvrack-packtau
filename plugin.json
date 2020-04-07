@@ -1,0 +1,33 @@
+{
+	"slug": "Stoermelder-PackTau",
+	"version": "1.0.0",
+	"license": "GPL-3.0-only",
+	"author": "Benjamin Dill",
+	"name": "PackTau",
+	"brand": "stoermelder",
+	"authorEmail": "stoermelder@outlook.com",
+	"pluginUrl": "https://github.com/stoermelder/vcvrack-packtau",
+	"authorUrl": "https://github.com/stoermelder",
+	"sourceUrl": "https://github.com/stoermelder/vcvrack-packtau.git",
+
+	"modules": [
+		{
+			"slug": "T7Ctrl",
+			"name": "T7-CTRL",
+			"description": "",
+			"tags": []
+		},
+		{
+			"slug": "T7Midi",
+			"name": "T7-MIDI",
+			"description": "",
+			"tags": []
+		},
+		{
+			"slug": "T7Assistant",
+			"name": "T7-ASSISTANT",
+			"description": "",
+			"tags": []
+		}
+	]
+}
