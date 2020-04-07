@@ -32,6 +32,11 @@ void T7CableToggleEvent::execute() {
 
 	if (cable) {
 		// Remove existing cable
+		// history::CableRemove
+		history::CableRemove* h = new history::CableRemove;
+		h->setCable(cable);
+		APP->history->push(h);
+
 		APP->scene->rack->removeCable(cable);
 		log("cable removed");
 	}
@@ -51,7 +56,14 @@ void T7CableToggleEvent::execute() {
 				if (APP->scene->rack->getCablesOnPort(inPort).size() > 0) {
 					// Input has a cable
 					if (replaceInputCable) {
-						APP->scene->rack->removeCable(APP->scene->rack->getCablesOnPort(inPort).front());
+						CableWidget* cw1 = APP->scene->rack->getCablesOnPort(inPort).front();
+
+						// history::CableRemove
+						history::CableRemove* h = new history::CableRemove;
+						h->setCable(cw1);
+						APP->history->push(h);
+
+						APP->scene->rack->removeCable(cw1);
 					}
 					else {
 						log("input port occupied");
@@ -65,6 +77,11 @@ void T7CableToggleEvent::execute() {
 		if (cw->isComplete()) {
 			APP->scene->rack->addCable(cw);
 			log("cable patched");
+
+			// history::CableAdd
+			history::CableAdd* h = new history::CableAdd;
+			h->setCable(cw);
+			APP->history->push(h);
 		}
 		else {
 			delete cw;

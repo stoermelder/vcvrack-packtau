@@ -46,7 +46,7 @@ struct T7MidiModule : Module {
 		}
 
 		Module* mr = rightExpander.module;
-		if (mr && mr->model->plugin->slug == "Stoermelder-Test" && mr->model->slug == "T7Midi") {
+		if (mr && mr->model->plugin->slug == "Stoermelder-PackTau" && mr->model->slug == "T7Midi") {
 			std::vector<T7MidiMessage>* queue1 = reinterpret_cast<std::vector<T7MidiMessage>*>(mr->leftExpander.consumerMessage);
 			for (T7MidiMessage m : *queue1) queue->push_back(m);
 			queue1->clear();

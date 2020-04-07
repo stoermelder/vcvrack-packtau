@@ -179,7 +179,7 @@ struct T7CtrlModule : Module {
 
 	void process(const ProcessArgs& args) override {
 		Module* mr = rightExpander.module;
-		if (mr && mr->model->plugin->slug == "Stoermelder-Test" && mr->model->slug == "T7Midi") {
+		if (mr && mr->model->plugin->slug == "Stoermelder-PackTau" && mr->model->slug == "T7Midi") {
 			std::vector<T7MidiMessage>* queue = reinterpret_cast<std::vector<T7MidiMessage>*>(mr->leftExpander.consumerMessage);
 			for (T7MidiMessage m : *queue) {
 				switch (m.msg.getStatus()) {
