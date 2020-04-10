@@ -85,7 +85,7 @@ struct T7AssistantWidget : ModuleWidget {
 		
 		DebugDisplay* textField2 = createWidget<DebugDisplay>(Vec(14.4f, 46.5f));
 		textField2->module = module;
-		textField2->box.size = Vec(150.4f, 286.8f);
+		textField2->box.size = Vec(150.4f, 277.5f);
 		textField2->multiline = true;
 		addChild(textField2);
 	}

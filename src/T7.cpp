@@ -3,9 +3,49 @@
 
 namespace T7 {
 
-T7CableToggleEvent::T7CableToggleEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd) {
+// T7CableEvent
+
+T7CableEvent::T7CableEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd) {
 	this->outPd = outPd;
 	this->inPd = inPd;
+}
+
+void T7CableEvent::removeCable(CableWidget* cw) {
+	// history::CableRemove
+	history::CableRemove* h = new history::CableRemove;
+	h->setCable(cw);
+	APP->history->push(h);
+	APP->scene->rack->removeCable(cw);
+}
+
+void T7CableEvent::addCable(CableWidget* cw) {
+	APP->scene->rack->addCable(cw);
+	// history::CableAdd
+	history::CableAdd* h = new history::CableAdd;
+	h->setCable(cw);
+	APP->history->push(h);
+}
+
+CableWidget* T7CableEvent::findCable(ModuleWidget* outputModule, ModuleWidget* inputModule) {
+	for (PortWidget* outPort : outputModule->outputs) {
+		if (outPort->portId == outPd.portId) {
+			for (CableWidget* cw : APP->scene->rack->getCablesOnPort(outPort)) {
+				if (cw->inputPort->portId == inPd.portId) {
+					// Cable found
+					return cw;
+				}
+			}
+			break;
+		}
+	}
+	return NULL;
+}
+
+
+// T7CableToggleEvent
+
+T7CableToggleEvent::T7CableToggleEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd)
+	: T7CableEvent(outPd, inPd) {
 }
 
 void T7CableToggleEvent::execute() {
@@ -16,33 +56,18 @@ void T7CableToggleEvent::execute() {
 	// NB: unstable API from here on...
 	// ---
 	// Check if cable already exists
-	CableWidget* cable = NULL;
-	for (PortWidget* outPort : outputModule->outputs) {
-		if (outPort->portId == outPd.portId) {
-			for (CableWidget* cw : APP->scene->rack->getCablesOnPort(outPort)) {
-				if (cw->inputPort->portId == inPd.portId) {
-					// Cable found
-					cable = cw;
-					break;
-				}
-			}
-			break;
-		}
-	}
-
+	CableWidget* cable = findCable(outputModule, inputModule);
 	if (cable) {
 		// Remove existing cable
-		// history::CableRemove
-		history::CableRemove* h = new history::CableRemove;
-		h->setCable(cable);
-		APP->history->push(h);
-
-		APP->scene->rack->removeCable(cable);
+		removeCable(cable);
 		log("cable removed");
 	}
 	else {
 		// Add new cable
 		CableWidget* cw = new CableWidget;
+		if (cableColor != "") {
+			cw->color = color::fromHexString(cableColor);
+		}
 		for (PortWidget* outPort : outputModule->outputs) {
 			if (outPort->portId == outPd.portId) {
 				// Output port found
@@ -57,13 +82,7 @@ void T7CableToggleEvent::execute() {
 					// Input has a cable
 					if (replaceInputCable) {
 						CableWidget* cw1 = APP->scene->rack->getCablesOnPort(inPort).front();
-
-						// history::CableRemove
-						history::CableRemove* h = new history::CableRemove;
-						h->setCable(cw1);
-						APP->history->push(h);
-
-						APP->scene->rack->removeCable(cw1);
+						removeCable(cw1);
 					}
 					else {
 						log("input port occupied");
@@ -75,18 +94,103 @@ void T7CableToggleEvent::execute() {
 			}
 		}
 		if (cw->isComplete()) {
-			APP->scene->rack->addCable(cw);
+			addCable(cw);
 			log("cable patched");
-
-			// history::CableAdd
-			history::CableAdd* h = new history::CableAdd;
-			h->setCable(cw);
-			APP->history->push(h);
 		}
 		else {
 			delete cw;
 			log("cable incomplete");
 		}
+	}
+	// ---
+}
+
+
+// T7CableAddEvent
+
+T7CableAddEvent::T7CableAddEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd)
+	: T7CableEvent(outPd, inPd) {
+}
+
+void T7CableAddEvent::execute() {
+	ModuleWidget* outputModule = APP->scene->rack->getModule(outPd.moduleId);
+	ModuleWidget* inputModule = APP->scene->rack->getModule(inPd.moduleId);
+	if (!outputModule || !inputModule) return;
+
+	// NB: unstable API from here on...
+	// ---
+	// Check if cable already exists
+	CableWidget* cable = findCable(outputModule, inputModule);
+	if (cable) {
+		log("cable already patched");
+		return;
+	}
+	else {
+		// Add new cable
+		CableWidget* cw = new CableWidget;
+		if (cableColor != "") {
+			cw->color = color::fromHexString(cableColor);
+		}
+		for (PortWidget* outPort : outputModule->outputs) {
+			if (outPort->portId == outPd.portId) {
+				// Output port found
+				cw->setOutput(outPort);
+				break;
+			}
+		}
+		for (PortWidget* inPort : inputModule->inputs) {
+			if (inPort->portId == inPd.portId) {
+				// Input port found
+				if (APP->scene->rack->getCablesOnPort(inPort).size() > 0) {
+					// Input has a cable
+					if (replaceInputCable) {
+						CableWidget* cw1 = APP->scene->rack->getCablesOnPort(inPort).front();
+						removeCable(cw1);
+					}
+					else {
+						log("input port occupied");
+						break;
+					}
+				}
+				cw->setInput(inPort);
+				break;
+			}
+		}
+		if (cw->isComplete()) {
+			addCable(cw);
+			log("cable patched");
+		}
+		else {
+			delete cw;
+			log("cable incomplete");
+		}
+	}
+	// ---
+}
+
+
+// T7CableRemoveEvent
+
+T7CableRemoveEvent::T7CableRemoveEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd)
+	: T7CableEvent(outPd, inPd) {
+}
+
+void T7CableRemoveEvent::execute() {
+	ModuleWidget* outputModule = APP->scene->rack->getModule(outPd.moduleId);
+	ModuleWidget* inputModule = APP->scene->rack->getModule(inPd.moduleId);
+	if (!outputModule || !inputModule) return;
+
+	// NB: unstable API from here on...
+	// ---
+	// Check if cable already exists
+	CableWidget* cable = findCable(outputModule, inputModule);
+	if (cable) {
+		// Remove existing cable
+		removeCable(cable);
+		log("cable removed");
+	}
+	else {
+		log("no cable to remove");
 	}
 	// ---
 }

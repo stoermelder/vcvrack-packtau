@@ -7,43 +7,110 @@ namespace T7 {
 
 template < typename MODULE >
 struct MidiCcTwoMessageToggle : T7Driver {
-	struct PortDescriptorEx : PortDescriptor {
-		int midiCcTriggerValue;
+	struct MidiPortDescriptor : PortDescriptor {
+		int midiType;
+		int midiCcValue;
+		std::string cableColor = "";
+		std::string comment = "";
 	};
 
 	MODULE* module;
 
-	std::map<std::tuple<int, int>, PortDescriptorEx> portMap;
-	PortDescriptorEx lastInput;
-	PortDescriptorEx lastOutput;
+	std::map<std::tuple<int, int>, MidiPortDescriptor> portMap;
+	MidiPortDescriptor lastInput;
+	MidiPortDescriptor lastOutput;
+	int lastEventType; // 0 = Trigger, 1 = Add, 2 = Remove
 
 	std::string getName() override {
-		return "MidiCcTwoMessageToggle";
+		return "MidiCcTwoMessage";
 	}
 
 	void exampleJson(json_t* driverJ) override {
 		json_t* eventsJ = json_array();
+
 		// Output
 		json_t* eventJ = json_object();
 		json_object_set_new(eventJ, "type", json_string("cable"));
-		json_object_set_new(eventJ, "midiChannel", json_integer(0));
-		json_object_set_new(eventJ, "midiCc", json_integer(12));
-		json_object_set_new(eventJ, "midiCcTriggerValue", json_integer(127));
-		json_object_set_new(eventJ, "moduleId", json_integer(4));
-		json_object_set_new(eventJ, "portType", json_string("output"));
-		json_object_set_new(eventJ, "portId", json_integer(1));
+
+		json_t* midiJ = json_object();
+		json_object_set_new(midiJ, "channel", json_integer(0));
+		json_object_set_new(midiJ, "cc", json_integer(11));
+		json_object_set_new(midiJ, "ccValue", json_integer(127));
+		json_object_set_new(midiJ, "type", json_string("gate"));
+		json_object_set_new(eventJ, "midi", midiJ);
+
+		json_t* targetJ = json_object();
+		json_object_set_new(targetJ, "moduleId", json_integer(4));
+		json_object_set_new(targetJ, "portType", json_string("output"));
+		json_object_set_new(targetJ, "portId", json_integer(5));
+		json_object_set_new(eventJ, "target", targetJ);
+
+		json_object_set_new(eventJ, "cableColor", json_string(color::toHexString(color::YELLOW).c_str()));
+		json_object_set_new(eventJ, "comment", json_string("comment for module 4 port 5"));
 		json_array_append_new(eventsJ, eventJ);
+
+		// Output
+		eventJ = json_object();
+		json_object_set_new(eventJ, "type", json_string("cable"));
+
+		midiJ = json_object();
+		json_object_set_new(midiJ, "channel", json_integer(0));
+		json_object_set_new(midiJ, "cc", json_integer(12));
+		json_object_set_new(midiJ, "ccValue", json_integer(127));
+		json_object_set_new(midiJ, "type", json_string("trigger"));
+		json_object_set_new(eventJ, "midi", midiJ);
+
+		targetJ = json_object();
+		json_object_set_new(targetJ, "moduleId", json_integer(3));
+		json_object_set_new(targetJ, "portType", json_string("output"));
+		json_object_set_new(targetJ, "portId", json_integer(3));
+		json_object_set_new(eventJ, "target", targetJ);
+
+		json_object_set_new(eventJ, "cableColor", json_string(color::toHexString(color::BLUE).c_str()));
+		json_object_set_new(eventJ, "comment", json_string("comment for module port 3"));
+		json_array_append_new(eventsJ, eventJ);
+
 		// Input
 		eventJ = json_object();
 		json_object_set_new(eventJ, "type", json_string("cable"));
-		json_object_set_new(eventJ, "midiChannel", json_integer(1));
-		json_object_set_new(eventJ, "midiCc", json_integer(13));
-		json_object_set_new(eventJ, "midiCcTriggerValue", json_integer(127));
-		json_object_set_new(eventJ, "moduleId", json_integer(2));
-		json_object_set_new(eventJ, "portType", json_string("input"));
-		json_object_set_new(eventJ, "portId", json_integer(3));
-		json_object_set_new(driverJ, "events", eventsJ);
+
+		midiJ = json_object();
+		json_object_set_new(midiJ, "channel", json_integer(1));
+		json_object_set_new(midiJ, "cc", json_integer(13));
+		json_object_set_new(midiJ, "ccValue", json_integer(127));
+		json_object_set_new(midiJ, "type", json_string("gate"));
+		json_object_set_new(eventJ, "midi", midiJ);
+
+		targetJ = json_object();
+		json_object_set_new(targetJ, "moduleId", json_integer(2));
+		json_object_set_new(targetJ, "portType", json_string("input"));
+		json_object_set_new(targetJ, "portId", json_integer(3));
+		json_object_set_new(eventJ, "target", targetJ);
+
+		json_object_set_new(eventJ, "comment", json_string("comment for module 2 port 3"));
 		json_array_append_new(eventsJ, eventJ);
+
+		// Input
+		eventJ = json_object();
+		json_object_set_new(eventJ, "type", json_string("cable"));
+
+		midiJ = json_object();
+		json_object_set_new(midiJ, "channel", json_integer(1));
+		json_object_set_new(midiJ, "cc", json_integer(13));
+		json_object_set_new(midiJ, "ccValue", json_integer(127));
+		json_object_set_new(midiJ, "type", json_string("trigger"));
+		json_object_set_new(eventJ, "midi", midiJ);
+
+		targetJ = json_object();
+		json_object_set_new(targetJ, "moduleId", json_integer(2));
+		json_object_set_new(targetJ, "portType", json_string("input"));
+		json_object_set_new(targetJ, "portId", json_integer(4));
+		json_object_set_new(eventJ, "target", targetJ);
+
+		json_object_set_new(eventJ, "comment", json_string("comment for module 2 port 4"));
+		json_array_append_new(eventsJ, eventJ);
+
+		json_object_set_new(driverJ, "events", eventsJ);
 	}
 
 	void toJson(json_t* driverJ) override {
@@ -51,19 +118,29 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		for (auto p : portMap) {
 			json_t* eventJ = json_object();
 			json_object_set_new(eventJ, "type", json_string("cable"));
-			json_object_set_new(eventJ, "midiChannel", json_integer(std::get<0>(p.first) + 1));
-			json_object_set_new(eventJ, "midiCc", json_integer(std::get<1>(p.first)));
-			json_object_set_new(eventJ, "midiCcTriggerValue", json_integer(p.second.midiCcTriggerValue));
-			json_object_set_new(eventJ, "moduleId", json_integer(p.second.moduleId));
-			json_object_set_new(eventJ, "portType", json_string(p.second.portType == 0 ? "output" : "input"));
-			json_object_set_new(eventJ, "portId", json_integer(p.second.portId));
+
+			json_t* midiJ = json_object();
+			json_object_set_new(midiJ, "channel", json_integer(std::get<0>(p.first) + 1));
+			json_object_set_new(midiJ, "cc", json_integer(std::get<1>(p.first)));
+			json_object_set_new(midiJ, "ccValue", json_integer(p.second.midiCcValue));
+			json_object_set_new(midiJ, "type", json_string(p.second.midiType == 0 ? "gate" : "trigger"));
+			json_object_set_new(eventJ, "midi", midiJ);
+
+			json_t* targetJ = json_object();
+			json_object_set_new(targetJ, "moduleId", json_integer(p.second.moduleId));
+			json_object_set_new(targetJ, "portType", json_string(p.second.portType == 0 ? "output" : "input"));
+			json_object_set_new(targetJ, "portId", json_integer(p.second.portId));
+			json_object_set_new(eventJ, "target", targetJ);
+
+			if (p.second.portType == 0) json_object_set_new(eventJ, "cableColor", json_string(p.second.cableColor.c_str()));
+			json_object_set_new(eventJ, "comment", json_string(p.second.comment.c_str()));
 			json_array_append_new(eventsJ, eventJ);
 		}
 		json_object_set_new(driverJ, "events", eventsJ);
 	}
 
 	void fromJson(json_t* driverJ) override {
-		portMap.clear();
+		reset();
 		json_t* eventsJ = json_object_get(driverJ, "events");
 		if (eventsJ) {
 			json_t* eventJ;
@@ -72,22 +149,34 @@ struct MidiCcTwoMessageToggle : T7Driver {
 				json_t* typeJ = json_object_get(eventJ, "type");
 				if (std::string(json_string_value(typeJ)) != "cable") continue;
 
-				json_t* midiChannelJ = json_object_get(eventJ, "midiChannel");
-				json_t* midiCcJ = json_object_get(eventJ, "midiCc");
-				json_t* midiCcTriggerValueJ = json_object_get(eventJ, "midiCcTriggerValue");
-				json_t* moduleIdJ = json_object_get(eventJ, "moduleId");
-				json_t* portTypeJ = json_object_get(eventJ, "portType");
-				json_t* portIdJ = json_object_get(eventJ, "portId");
-				if (!midiChannelJ || !midiCcJ || !moduleIdJ || !portTypeJ || !portIdJ) continue;
+				json_t* midiJ = json_object_get(eventJ, "midi");
+				if (!midiJ) continue;
+				json_t* midiChannelJ = json_object_get(midiJ, "channel");
+				json_t* midiCcJ = json_object_get(midiJ, "cc");
+				json_t* midiCcValueJ = json_object_get(midiJ, "ccValue");
+				json_t* midiTypeJ = json_object_get(midiJ, "type");
+
+				json_t* targetJ = json_object_get(eventJ, "target");
+				if (!targetJ) continue;
+				json_t* moduleIdJ = json_object_get(targetJ, "moduleId");
+				json_t* portTypeJ = json_object_get(targetJ, "portType");
+				json_t* portIdJ = json_object_get(targetJ, "portId");
+
+				if (!midiChannelJ || !midiCcJ || !moduleIdJ || !midiTypeJ || !portTypeJ || !portIdJ) continue;
+				json_t* cableColorJ = json_object_get(eventJ, "cableColor");
+				json_t* commentJ = json_object_get(eventJ, "comment");
 
 				int midiChannel = json_integer_value(midiChannelJ) - 1;
 				int midiCc = json_integer_value(midiCcJ);
 
-				PortDescriptorEx pd;
-				pd.midiCcTriggerValue = json_integer_value(midiCcTriggerValueJ);
+				MidiPortDescriptor pd;
+				pd.midiType = std::string(json_string_value(midiTypeJ)) == "gate" ? 0 : 1;
+				pd.midiCcValue = json_integer_value(midiCcValueJ);
 				pd.moduleId = json_integer_value(moduleIdJ);
 				pd.portType = std::string(json_string_value(portTypeJ)) == "output" ? 0 : 1;
 				pd.portId = json_integer_value(portIdJ);
+				pd.cableColor = cableColorJ ? json_string_value(cableColorJ) : "";
+				pd.comment = commentJ ? json_string_value(commentJ) : "";
 
 				auto t = std::make_tuple(midiChannel, midiCc);
 				portMap[t] = pd;
@@ -95,21 +184,37 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		}
 	}
 
+	void reset() override {
+		portMap.clear();
+	}
+
 	bool processMessage(midi::Message msg) override {
 		uint8_t ch = msg.getChannel();
 		uint8_t cc = msg.getNote();
 		int8_t value = msg.bytes[2];
 
-		if (value > 0) {
-			auto pd = portMap.find(std::tuple<int, int>(ch, cc));
-			if (pd == portMap.end()) {
-				pd = portMap.find(std::tuple<int, int>(-1, cc));
+		auto it = portMap.find(std::tuple<int, int>(ch, cc));
+		if (it == portMap.end()) {
+			it = portMap.find(std::tuple<int, int>(-1, cc));
+		}
+
+		auto h = [&](MidiPortDescriptor &pd, int lastEventType) {
+			if (pd.portType == 0) this->lastEventType = lastEventType;
+			if (pd.portType == 0) this->lastOutput = pd; // output
+			if (pd.portType == 1) this->lastInput = pd; // input
+		};
+
+		if (it != portMap.end()) {
+			MidiPortDescriptor pd;
+			std::tie(std::ignore, pd) = *it;
+
+			if (pd.midiType == 0) { // Gate
+				if (value == 0) h(pd, 2); // Remove
+				if (value >= pd.midiCcValue) h(pd, 1); // Add
 			}
-			if (pd != portMap.end() && value >= pd->second.midiCcTriggerValue) {
-				if (pd->second.portType == 0) // output
-					lastOutput = pd->second;
-				if (pd->second.portType == 1) // input
-					lastInput = pd->second;
+
+			if (pd.midiType == 1) { // Trigger
+				if (value >= pd.midiCcValue) h(pd, 0); // Toggle
 			}
 		}
 
@@ -118,7 +223,11 @@ struct MidiCcTwoMessageToggle : T7Driver {
 
 	T7Event* getEvent() override {
 		if (lastInput.moduleId >= 0 && lastOutput.moduleId >= 0) {
-			T7CableToggleEvent* e = new T7CableToggleEvent {lastOutput, lastInput};
+			T7CableEvent* e = NULL;
+			if (lastEventType == 0) e = new T7CableToggleEvent {lastOutput, lastInput};
+			if (lastEventType == 1) e = new T7CableAddEvent {lastOutput, lastInput};
+			if (lastEventType == 2) e = new T7CableRemoveEvent {lastOutput, lastInput};
+			e->cableColor = lastOutput.cableColor;
 			e->replaceInputCable = module->replaceInputCable;
 			lastInput.moduleId = lastOutput.moduleId = -1;
 			return e;
@@ -144,7 +253,7 @@ struct T7CtrlModule : Module {
 
 	bool replaceInputCable;
 
-	T7Driver* driver = NULL;
+	std::vector<T7Driver*> driver;
 
 	dsp::RingBuffer<std::string, 256> debugMessagesEngine;
 	dsp::RingBuffer<T7Event*, 16> events;
@@ -161,18 +270,22 @@ struct T7CtrlModule : Module {
 	T7CtrlModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		onReset();
+
+		auto d1 = new MidiCcTwoMessageToggle<T7CtrlModule>();
+		d1->module = this;
+		driver.push_back(d1);
 	}
 
 	~T7CtrlModule() {
-		if (driver) delete driver;
+		for (T7Driver* d : driver) {
+			delete d;
+		}
 	}
 
 	void onReset() override {
-		if (driver) delete driver;
-		auto d = new MidiCcTwoMessageToggle<T7CtrlModule>();
-		d->module = this;
-		driver = d;
-
+		for (T7Driver* d : driver) {
+			d->reset();
+		}
 		replaceInputCable = true;
 		Module::onReset();
 	}
@@ -204,9 +317,9 @@ struct T7CtrlModule : Module {
 		if (!debugMessagesEngine.full()) {
 			debugMessagesEngine.push(s);
 		}
-		if (driver) {
-			if (driver->processMessage(msg)) {
-				T7Event* e = driver->getEvent();
+		for (T7Driver* d : driver) {
+			if (d->processMessage(msg)) {
+				T7Event* e = d->getEvent();
 				e->logger = &eventLogger;
 				if (!events.full()) events.push(e);
 			}
@@ -214,42 +327,43 @@ struct T7CtrlModule : Module {
 	}
 
 	json_t* driverMappingExampleJson() {
-		json_t* driverJ = json_object();
-		std::string driverName = "";
-		if (driver) {
-			driver->exampleJson(driverJ);
-			driverName = driver->getName();
+		json_t* driversJ = json_array();
+		for (T7Driver* d : driver) {
+			json_t* driverJ = json_object();
+			std::string driverName = "";
+			d->exampleJson(driverJ);
+			driverName = d->getName();
+			json_object_set_new(driverJ, "driverName", json_string(driverName.c_str()));
+			json_array_append_new(driversJ, driverJ);
 		}
-		json_object_set_new(driverJ, "driverName", json_string(driverName.c_str()));
-		return driverJ;
+		return driversJ;
 	}
 
 	json_t* driverMappingToJson() {
-		json_t* driverJ = json_object();
-		std::string driverName = "";
-		if (driver) {
-			driver->toJson(driverJ);
-			driverName = driver->getName();
+		json_t* driversJ = json_array();
+		for (T7Driver* d : driver) {
+			json_t* driverJ = json_object();
+			std::string driverName = "";
+			d->toJson(driverJ);
+			driverName = d->getName();
+			json_object_set_new(driverJ, "driverName", json_string(driverName.c_str()));
+			json_array_append_new(driversJ, driverJ);
 		}
-		json_object_set_new(driverJ, "driverName", json_string(driverName.c_str()));
-		return driverJ;
+		return driversJ;
 	}
 
-	void driverMappingFromJson(json_t* driverJ) {
-		json_t* driverNameJ = json_object_get(driverJ, "driverName");
-		if (!driverNameJ) return;
-		if (driver) delete driver;
-		driver = NULL;
-
-		std::string driverName = json_string_value(driverNameJ);
-		if (driverName == "MidiCcTwoMessageToggle") {
-			auto d = new MidiCcTwoMessageToggle<T7CtrlModule>();
-			d->module = this;
-			driver = d;
-		}
-
-		if (driver && driverJ) {
-			driver->fromJson(driverJ);
+	void driverMappingFromJson(json_t* driversJ) {
+		json_t* driverJ;
+		size_t driverIdx;
+		json_array_foreach(driversJ, driverIdx, driverJ) {
+			json_t* driverNameJ = json_object_get(driverJ, "driverName");
+			if (!driverNameJ) continue;
+			std::string driverName = json_string_value(driverNameJ);
+			for (T7Driver* d : driver) {
+				if (d->getName() == driverName) {
+					d->fromJson(driverJ);
+				}
+			}
 		}
 	}
 
@@ -257,9 +371,8 @@ struct T7CtrlModule : Module {
 		json_t* rootJ = json_object();
 		json_object_set_new(rootJ, "replaceInputCable", json_boolean(replaceInputCable));
 
-		json_t* driverJ = driverMappingToJson();
-		json_object_set_new(rootJ, "driver", driverJ);
-
+		json_t* driversJ = driverMappingToJson();
+		json_object_set_new(rootJ, "driver", driversJ);
 		return rootJ;
 	}
 
@@ -306,7 +419,7 @@ struct T7CtrlWidget : ModuleWidget {
 
 		MidiDisplay* textField1 = createWidget<MidiDisplay>(Vec(14.4f, 46.5f));
 		textField1->module = module;
-		textField1->box.size = Vec(211.1f, 286.8f);
+		textField1->box.size = Vec(211.1f, 277.5f);
 		textField1->multiline = true;
 		addChild(textField1);
 	}

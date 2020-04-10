@@ -33,17 +33,35 @@ struct T7Driver {
 	virtual void toJson(json_t* driverJ) {}
 	virtual void fromJson(json_t* driverJ) {}
 	virtual void exampleJson(json_t* driverJ) {}
+	virtual void reset() {}
 	virtual bool processMessage(midi::Message msg) { return false; }
 	virtual T7Event* getEvent() { return NULL; }
 };
 
 
-struct T7CableToggleEvent : T7Event {
+struct T7CableEvent : T7Event {
 	T7Driver::PortDescriptor outPd;
 	T7Driver::PortDescriptor inPd;
+	std::string cableColor = "";
 	bool replaceInputCable = false;
+	T7CableEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd);
+	void removeCable(CableWidget* cw);
+	void addCable(CableWidget* cw);
+	CableWidget* findCable(ModuleWidget* outputModule, ModuleWidget* inputModule);
+};
 
+struct T7CableToggleEvent : T7CableEvent {
 	T7CableToggleEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd);
+	void execute() override;
+};
+
+struct T7CableAddEvent : T7CableEvent {
+	T7CableAddEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd);
+	void execute() override;
+};
+
+struct T7CableRemoveEvent : T7CableEvent {
+	T7CableRemoveEvent(T7Driver::PortDescriptor outPd, T7Driver::PortDescriptor inPd);
 	void execute() override;
 };
 
