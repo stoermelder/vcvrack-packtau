@@ -28,6 +28,12 @@
 			"name": "T7-ASSISTANT",
 			"description": "",
 			"tags": []
+		},
+		{
+			"slug": "Mb",
+			"name": "MB",
+			"description": "",
+			"tags": []
 		}
 	]
 }
