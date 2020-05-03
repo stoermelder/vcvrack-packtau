@@ -656,6 +656,7 @@ struct MbModule : Module {
 		NUM_OUTPUTS
 	};
 	enum LightIds {
+		LIGHT_ACTIVE,
 		NUM_LIGHTS
 	};
 
@@ -669,35 +670,49 @@ struct MbModule : Module {
 struct MbWidget : ModuleWidget {
     Widget* moduleBrowserBackup;
     Widget* moduleBrowser;
-    
+    bool active = false;
+
 	MbWidget(MbModule *module) {
 		setModule(module);
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Mb.svg")));
 
-        if (module) {
-            moduleBrowserBackup = APP->scene->moduleBrowser;
-            moduleBrowserBackup->hide();
-            APP->scene->removeChild(moduleBrowserBackup);
+		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 291.3f), module, MbModule::LIGHT_ACTIVE));
 
-            moduleBrowser = new BrowserOverlay;
-            ModuleBrowser* browser = new ModuleBrowser;
-            moduleBrowser->hide();
-            moduleBrowser->addChild(browser);
+		if (module) {
+			active = registerSingleton("Mb", this);
+			if (active) {
+				moduleBrowserBackup = APP->scene->moduleBrowser;
+				moduleBrowserBackup->hide();
+				APP->scene->removeChild(moduleBrowserBackup);
 
-            APP->scene->moduleBrowser = moduleBrowser;
-            APP->scene->addChild(moduleBrowser);
-        }
+				moduleBrowser = new BrowserOverlay;
+				ModuleBrowser* browser = new ModuleBrowser;
+				moduleBrowser->hide();
+				moduleBrowser->addChild(browser);
+
+				APP->scene->moduleBrowser = moduleBrowser;
+				APP->scene->addChild(moduleBrowser);
+			}
+		}
 	}
 
-    ~MbWidget() {
-        if (module) {
-            APP->scene->moduleBrowser = moduleBrowserBackup;
-            APP->scene->addChild(moduleBrowserBackup);
+	void step() override {
+		if (module) {
+			module->lights[MbModule::LIGHT_ACTIVE].setBrightness(active);
+		}
+		ModuleWidget::step();
+	}
 
-            APP->scene->removeChild(moduleBrowser);
-            delete moduleBrowser;
-        }
-    }
+	~MbWidget() {
+		if (module && active) {
+			unregisterSingleton("Mb", this);
+			APP->scene->moduleBrowser = moduleBrowserBackup;
+			APP->scene->addChild(moduleBrowserBackup);
+
+			APP->scene->removeChild(moduleBrowser);
+			delete moduleBrowser;
+		}
+	}
 };
 
 } // namespace Mb
