@@ -10,6 +10,7 @@ void init(rack::Plugin* p) {
 	p->addModel(modelT7Assistant);
 
 	p->addModel(modelMb);
+	p->addModel(modelMx);
 }
 
 

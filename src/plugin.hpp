@@ -10,6 +10,7 @@ extern Model* modelT7Midi;
 extern Model* modelT7Assistant;
 
 extern Model* modelMb;
+extern Model* modelMx;
 
 
 bool registerSingleton(std::string name, ModuleWidget* mw);
