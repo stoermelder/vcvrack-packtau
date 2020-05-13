@@ -4,6 +4,9 @@
 
 StoermelderSettings pluginSettings;
 
+StoermelderSettings::~StoermelderSettings() {
+    if (mbV06favouritesJ) json_decref(mbV06favouritesJ);
+}
 
 void StoermelderSettings::saveToJson() {
     json_t* settingsJ = json_object();
@@ -37,7 +40,8 @@ void StoermelderSettings::readFromJson() {
     }
 
     mbV06favouritesJ = json_copy(json_object_get(settingsJ, "mbV06favourites"));
-    mbV1zoom = json_real_value(json_object_get(settingsJ, "mbV1zoom"));
+    json_t* mbV1zoomJ = json_object_get(settingsJ, "mbV1zoom");
+    mbV1zoom = json_real_value(mbV1zoomJ);
 
     fclose(file);
     json_decref(settingsJ);
