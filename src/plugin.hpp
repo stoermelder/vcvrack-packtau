@@ -1,7 +1,9 @@
 #include <rack.hpp>
-
+#include "pluginsettings.hpp"
 
 using namespace rack;
+
+extern StoermelderSettings pluginSettings;
 
 extern Plugin* pluginInstance;
 
