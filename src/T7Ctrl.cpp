@@ -6,9 +6,8 @@
 namespace T7 {
 
 template < typename MODULE >
-struct MidiCcTwoMessageToggle : T7Driver {
+struct MidiCcTwoMessage : T7Driver {
 	struct MidiPortDescriptor : PortDescriptor {
-		int midiType;
 		int midiCcValue;
 		std::string cableColor = "";
 		std::string comment = "";
@@ -16,13 +15,15 @@ struct MidiCcTwoMessageToggle : T7Driver {
 
 	MODULE* module;
 
-	std::map<std::tuple<int, int>, MidiPortDescriptor> portMap;
-	MidiPortDescriptor lastInput;
-	MidiPortDescriptor lastOutput;
+	std::map<std::tuple<int, int>, const MidiPortDescriptor*> portMap;
+	const MidiPortDescriptor* lastInput = NULL;
+	const MidiPortDescriptor* lastOutput = NULL;
 	int lastEventType; // 0 = Trigger, 1 = Add, 2 = Remove
 
-	std::string getName() override {
-		return "MidiCcTwoMessage";
+	~MidiCcTwoMessage() {
+		for (auto p : portMap) {
+			delete p.second;
+		}
 	}
 
 	void exampleJson(json_t* driverJ) override {
@@ -36,7 +37,6 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		json_object_set_new(midiJ, "channel", json_integer(0));
 		json_object_set_new(midiJ, "cc", json_integer(11));
 		json_object_set_new(midiJ, "ccValue", json_integer(127));
-		json_object_set_new(midiJ, "type", json_string("gate"));
 		json_object_set_new(eventJ, "midi", midiJ);
 
 		json_t* targetJ = json_object();
@@ -57,7 +57,6 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		json_object_set_new(midiJ, "channel", json_integer(0));
 		json_object_set_new(midiJ, "cc", json_integer(12));
 		json_object_set_new(midiJ, "ccValue", json_integer(127));
-		json_object_set_new(midiJ, "type", json_string("trigger"));
 		json_object_set_new(eventJ, "midi", midiJ);
 
 		targetJ = json_object();
@@ -78,7 +77,6 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		json_object_set_new(midiJ, "channel", json_integer(1));
 		json_object_set_new(midiJ, "cc", json_integer(13));
 		json_object_set_new(midiJ, "ccValue", json_integer(127));
-		json_object_set_new(midiJ, "type", json_string("gate"));
 		json_object_set_new(eventJ, "midi", midiJ);
 
 		targetJ = json_object();
@@ -98,7 +96,6 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		json_object_set_new(midiJ, "channel", json_integer(1));
 		json_object_set_new(midiJ, "cc", json_integer(13));
 		json_object_set_new(midiJ, "ccValue", json_integer(127));
-		json_object_set_new(midiJ, "type", json_string("trigger"));
 		json_object_set_new(eventJ, "midi", midiJ);
 
 		targetJ = json_object();
@@ -122,18 +119,17 @@ struct MidiCcTwoMessageToggle : T7Driver {
 			json_t* midiJ = json_object();
 			json_object_set_new(midiJ, "channel", json_integer(std::get<0>(p.first) + 1));
 			json_object_set_new(midiJ, "cc", json_integer(std::get<1>(p.first)));
-			json_object_set_new(midiJ, "ccValue", json_integer(p.second.midiCcValue));
-			json_object_set_new(midiJ, "type", json_string(p.second.midiType == 0 ? "gate" : "trigger"));
+			json_object_set_new(midiJ, "ccValue", json_integer(p.second->midiCcValue));
 			json_object_set_new(eventJ, "midi", midiJ);
 
 			json_t* targetJ = json_object();
-			json_object_set_new(targetJ, "moduleId", json_integer(p.second.moduleId));
-			json_object_set_new(targetJ, "portType", json_string(p.second.portType == 0 ? "output" : "input"));
-			json_object_set_new(targetJ, "portId", json_integer(p.second.portId));
+			json_object_set_new(targetJ, "moduleId", json_integer(p.second->moduleId));
+			json_object_set_new(targetJ, "portType", json_string(p.second->portType == 0 ? "output" : "input"));
+			json_object_set_new(targetJ, "portId", json_integer(p.second->portId));
 			json_object_set_new(eventJ, "target", targetJ);
 
-			if (p.second.portType == 0) json_object_set_new(eventJ, "cableColor", json_string(p.second.cableColor.c_str()));
-			json_object_set_new(eventJ, "comment", json_string(p.second.comment.c_str()));
+			if (p.second->portType == 0) json_object_set_new(eventJ, "cableColor", json_string(p.second->cableColor.c_str()));
+			json_object_set_new(eventJ, "comment", json_string(p.second->comment.c_str()));
 			json_array_append_new(eventsJ, eventJ);
 		}
 		json_object_set_new(driverJ, "events", eventsJ);
@@ -154,7 +150,6 @@ struct MidiCcTwoMessageToggle : T7Driver {
 				json_t* midiChannelJ = json_object_get(midiJ, "channel");
 				json_t* midiCcJ = json_object_get(midiJ, "cc");
 				json_t* midiCcValueJ = json_object_get(midiJ, "ccValue");
-				json_t* midiTypeJ = json_object_get(midiJ, "type");
 
 				json_t* targetJ = json_object_get(eventJ, "target");
 				if (!targetJ) continue;
@@ -162,21 +157,20 @@ struct MidiCcTwoMessageToggle : T7Driver {
 				json_t* portTypeJ = json_object_get(targetJ, "portType");
 				json_t* portIdJ = json_object_get(targetJ, "portId");
 
-				if (!midiChannelJ || !midiCcJ || !moduleIdJ || !midiTypeJ || !portTypeJ || !portIdJ) continue;
+				if (!midiChannelJ || !midiCcJ || !moduleIdJ || !portTypeJ || !portIdJ) continue;
 				json_t* cableColorJ = json_object_get(eventJ, "cableColor");
 				json_t* commentJ = json_object_get(eventJ, "comment");
 
 				int midiChannel = json_integer_value(midiChannelJ) - 1;
 				int midiCc = json_integer_value(midiCcJ);
 
-				MidiPortDescriptor pd;
-				pd.midiType = std::string(json_string_value(midiTypeJ)) == "gate" ? 0 : 1;
-				pd.midiCcValue = json_integer_value(midiCcValueJ);
-				pd.moduleId = json_integer_value(moduleIdJ);
-				pd.portType = std::string(json_string_value(portTypeJ)) == "output" ? 0 : 1;
-				pd.portId = json_integer_value(portIdJ);
-				pd.cableColor = cableColorJ ? json_string_value(cableColorJ) : "";
-				pd.comment = commentJ ? json_string_value(commentJ) : "";
+				MidiPortDescriptor* pd = new MidiPortDescriptor;
+				pd->midiCcValue = json_integer_value(midiCcValueJ);
+				pd->moduleId = json_integer_value(moduleIdJ);
+				pd->portType = std::string(json_string_value(portTypeJ)) == "output" ? 0 : 1;
+				pd->portId = json_integer_value(portIdJ);
+				pd->cableColor = cableColorJ ? json_string_value(cableColorJ) : "";
+				pd->comment = commentJ ? json_string_value(commentJ) : "";
 
 				auto t = std::make_tuple(midiChannel, midiCc);
 				portMap[t] = pd;
@@ -188,51 +182,80 @@ struct MidiCcTwoMessageToggle : T7Driver {
 		portMap.clear();
 	}
 
+	T7Event* getEvent() override {
+		if (lastInput && lastOutput) {
+			T7CableEvent* e = NULL;
+			if (lastEventType == 0) e = new T7CableToggleEvent {*lastOutput, *lastInput};
+			if (lastEventType == 1) e = new T7CableAddEvent {*lastOutput, *lastInput};
+			if (lastEventType == 2) e = new T7CableRemoveEvent {*lastOutput, *lastInput};
+			e->cableColor = lastOutput->cableColor;
+			e->replaceInputCable = module->replaceInputCable;
+			lastInput = lastOutput = NULL;
+			return e;
+		}
+		return NULL;
+	}
+};
+
+
+template < typename MODULE >
+struct MidiCcTwoMessageToggle : MidiCcTwoMessage<MODULE> {
+	std::string getName() override {
+		return "MidiCcTwoMessageToggle";
+	}
+
 	bool processMessage(midi::Message msg) override {
 		uint8_t ch = msg.getChannel();
 		uint8_t cc = msg.getNote();
 		int8_t value = msg.bytes[2];
 
-		auto it = portMap.find(std::tuple<int, int>(ch, cc));
-		if (it == portMap.end()) {
-			it = portMap.find(std::tuple<int, int>(-1, cc));
+		auto it = this->portMap.find(std::tuple<int, int>(ch, cc));
+		if (it == this->portMap.end()) {
+			it = this->portMap.find(std::tuple<int, int>(-1, cc));
 		}
 
-		auto h = [&](MidiPortDescriptor &pd, int lastEventType) {
-			if (pd.portType == 0) this->lastEventType = lastEventType;
-			if (pd.portType == 0) this->lastOutput = pd; // output
-			if (pd.portType == 1) this->lastInput = pd; // input
-		};
-
-		if (it != portMap.end()) {
-			MidiPortDescriptor pd;
+		if (it != this->portMap.end()) {
+			const typename MidiCcTwoMessage<MODULE>::MidiPortDescriptor* pd;
 			std::tie(std::ignore, pd) = *it;
 
-			if (pd.midiType == 0) { // Gate
-				if (value == 0) h(pd, 2); // Remove
-				if (value >= pd.midiCcValue) h(pd, 1); // Add
-			}
-
-			if (pd.midiType == 1) { // Trigger
-				if (value >= pd.midiCcValue) h(pd, 0); // Toggle
+			if (value >= pd->midiCcValue) {
+				if (pd->portType == 0) this->lastEventType = 0; // Toggle
+				if (pd->portType == 0) this->lastOutput = pd; // output
+				if (pd->portType == 1) this->lastInput = pd; // input
 			}
 		}
 
-		return lastInput.moduleId >= 0 && lastOutput.moduleId >= 0;
+		return this->lastInput && this->lastOutput;
+	}
+};
+
+
+template < typename MODULE >
+struct MidiCcTwoMessageGate : MidiCcTwoMessage<MODULE> {
+	std::string getName() override {
+		return "MidiCcTwoMessageGate";
 	}
 
-	T7Event* getEvent() override {
-		if (lastInput.moduleId >= 0 && lastOutput.moduleId >= 0) {
-			T7CableEvent* e = NULL;
-			if (lastEventType == 0) e = new T7CableToggleEvent {lastOutput, lastInput};
-			if (lastEventType == 1) e = new T7CableAddEvent {lastOutput, lastInput};
-			if (lastEventType == 2) e = new T7CableRemoveEvent {lastOutput, lastInput};
-			e->cableColor = lastOutput.cableColor;
-			e->replaceInputCable = module->replaceInputCable;
-			lastInput.moduleId = lastOutput.moduleId = -1;
-			return e;
+	bool processMessage(midi::Message msg) override {
+		uint8_t ch = msg.getChannel();
+		uint8_t cc = msg.getNote();
+		int8_t value = msg.bytes[2];
+
+		auto it = this->portMap.find(std::tuple<int, int>(ch, cc));
+		if (it == this->portMap.end()) {
+			it = this->portMap.find(std::tuple<int, int>(-1, cc));
 		}
-		return NULL;
+
+		if (it != this->portMap.end()) {
+			const typename MidiCcTwoMessage<MODULE>::MidiPortDescriptor* pd;
+			std::tie(std::ignore, pd) = *it;
+			if (value == 0) this->lastEventType = 2; // Remove
+			if (value >= pd->midiCcValue) this->lastEventType = 1; // Add
+			if (pd->portType == 0) this->lastOutput = pd; // output
+			if (pd->portType == 1) this->lastInput = pd; // input
+		}
+
+		return this->lastInput && this->lastOutput;
 	}
 };
 
@@ -274,6 +297,9 @@ struct T7CtrlModule : Module {
 		auto d1 = new MidiCcTwoMessageToggle<T7CtrlModule>();
 		d1->module = this;
 		driver.push_back(d1);
+		auto d2 = new MidiCcTwoMessageGate<T7CtrlModule>();
+		d2->module = this;
+		driver.push_back(d2);
 	}
 
 	~T7CtrlModule() {
@@ -295,34 +321,37 @@ struct T7CtrlModule : Module {
 		if (mr && mr->model->plugin->slug == "Stoermelder-PackTau" && mr->model->slug == "T7Midi") {
 			std::vector<T7MidiMessage>* queue = reinterpret_cast<std::vector<T7MidiMessage>*>(mr->leftExpander.consumerMessage);
 			for (T7MidiMessage m : *queue) {
-				switch (m.msg.getStatus()) {
-					// cc
-					case 0xb:
-						processCC(m.driverId, m.deviceId, m.msg);
+				switch (m.type) {
+					case T7MessageType::MIDI: {
+						processMidi(m.driverId, m.deviceId, m.msg);
 						break;
-					default:
-						break;
+					}
 				}
 			}
 			queue->clear();
 		}
 	}
 
-	void processCC(int driverId, int deviceId, midi::Message msg) {
-		uint8_t ch = msg.getChannel();
-		uint8_t cc = msg.getNote();
-		int8_t value = msg.bytes[2];
-
-		std::string s = string::f("drv %i dev %i ch %i cc %i val %i", driverId, deviceId, ch + 1, cc, value);
-		if (!debugMessagesEngine.full()) {
-			debugMessagesEngine.push(s);
-		}
-		for (T7Driver* d : driver) {
-			if (d->processMessage(msg)) {
-				T7Event* e = d->getEvent();
-				e->logger = &eventLogger;
-				if (!events.full()) events.push(e);
+	void processMidi(int driverId, int deviceId, midi::Message msg) {
+		switch (msg.getStatus()) {
+			case 0xb: { // cc
+				if (!debugMessagesEngine.full()) {
+					uint8_t ch = msg.getChannel();
+					uint8_t cc = msg.getNote();
+					int8_t value = msg.bytes[2];
+					std::string s = string::f("drv %i dev %i ch %i cc %i val %i", driverId, deviceId, ch + 1, cc, value);
+					debugMessagesEngine.push(s);
+				}
+				for (T7Driver* d : driver) {
+					if (d->processMessage(msg)) {
+						T7Event* e = d->getEvent();
+						e->logger = &eventLogger;
+						if (!events.full()) events.push(e);
+					}
+				}
 			}
+			default:
+				break;
 		}
 	}
 

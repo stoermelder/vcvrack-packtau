@@ -1,0 +1,374 @@
+{
+  "version": "1.dev.2f5bff5",
+  "modules": [
+    {
+      "id": 1,
+      "plugin": "Core",
+      "version": "1.1.6",
+      "model": "AudioInterface",
+      "params": [],
+      "leftModuleId": 32,
+      "data": {
+        "audio": {
+          "driver": 6,
+          "deviceName": "Speakers (Realtek High Definition Audio(SST))",
+          "offset": 0,
+          "maxChannels": 8,
+          "sampleRate": 44100,
+          "blockSize": 256
+        }
+      },
+      "pos": [
+        45,
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "plugin": "Fundamental",
+      "version": "1.4.0",
+      "model": "VCO",
+      "params": [
+        {
+          "id": 0,
+          "value": 1.0
+        },
+        {
+          "id": 1,
+          "value": 1.0
+        },
+        {
+          "id": 2,
+          "value": -0.648000002
+        },
+        {
+          "id": 3,
+          "value": 0.0
+        },
+        {
+          "id": 4,
+          "value": 0.0
+        },
+        {
+          "id": 5,
+          "value": 0.5
+        },
+        {
+          "id": 6,
+          "value": 0.0
+        }
+      ],
+      "rightModuleId": 31,
+      "pos": [
+        20,
+        0
+      ]
+    },
+    {
+      "id": 31,
+      "plugin": "Fundamental",
+      "version": "1.4.0",
+      "model": "VCA-1",
+      "params": [
+        {
+          "id": 0,
+          "value": 1.0
+        },
+        {
+          "id": 1,
+          "value": 1.0
+        }
+      ],
+      "leftModuleId": 3,
+      "pos": [
+        30,
+        0
+      ]
+    },
+    {
+      "id": 32,
+      "plugin": "Fundamental",
+      "version": "1.4.0",
+      "model": "VCMixer",
+      "params": [
+        {
+          "id": 0,
+          "value": 1.0
+        },
+        {
+          "id": 1,
+          "value": 1.0
+        },
+        {
+          "id": 2,
+          "value": 1.0
+        },
+        {
+          "id": 3,
+          "value": 1.0
+        },
+        {
+          "id": 4,
+          "value": 1.0
+        }
+      ],
+      "rightModuleId": 1,
+      "pos": [
+        35,
+        0
+      ]
+    },
+    {
+      "id": 34,
+      "plugin": "Fundamental",
+      "version": "1.4.0",
+      "model": "ADSR",
+      "params": [
+        {
+          "id": 0,
+          "value": 0.0
+        },
+        {
+          "id": 1,
+          "value": 0.0
+        },
+        {
+          "id": 2,
+          "value": 0.615500033
+        },
+        {
+          "id": 3,
+          "value": 0.462000012
+        }
+      ],
+      "leftModuleId": 35,
+      "pos": [
+        10,
+        0
+      ]
+    },
+    {
+      "id": 35,
+      "plugin": "Fundamental",
+      "version": "1.4.0",
+      "model": "LFO",
+      "params": [
+        {
+          "id": 0,
+          "value": 1.0
+        },
+        {
+          "id": 1,
+          "value": 1.0
+        },
+        {
+          "id": 2,
+          "value": 1.0
+        },
+        {
+          "id": 3,
+          "value": 0.0
+        },
+        {
+          "id": 4,
+          "value": 0.0
+        },
+        {
+          "id": 5,
+          "value": 0.5
+        },
+        {
+          "id": 6,
+          "value": 0.0
+        }
+      ],
+      "rightModuleId": 34,
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 46,
+      "plugin": "Stoermelder-PackTau",
+      "version": "1.0.0",
+      "model": "T7Midi",
+      "params": [],
+      "leftModuleId": 47,
+      "data": {
+        "midi": {
+          "driver": 4,
+          "deviceName": "Maschine Jam - 1 0",
+          "channel": -1
+        }
+      },
+      "pos": [
+        36,
+        1
+      ]
+    },
+    {
+      "id": 47,
+      "plugin": "Stoermelder-PackTau",
+      "version": "1.0.0",
+      "model": "T7Ctrl",
+      "params": [],
+      "rightModuleId": 46,
+      "data": {
+        "replaceInputCable": true,
+        "driver": [
+          {
+            "events": [
+              {
+                "type": "cable",
+                "midi": {
+                  "channel": 1,
+                  "cc": 1,
+                  "ccValue": 127,
+                  "type": "trigger"
+                },
+                "target": {
+                  "moduleId": 3,
+                  "portType": "output",
+                  "portId": 0
+                },
+                "cableColor": "#ffff00",
+                "comment": ""
+              },
+              {
+                "type": "cable",
+                "midi": {
+                  "channel": 1,
+                  "cc": 2,
+                  "ccValue": 127,
+                  "type": "trigger"
+                },
+                "target": {
+                  "moduleId": 3,
+                  "portType": "output",
+                  "portId": 1
+                },
+                "cableColor": "#ffff00",
+                "comment": ""
+              },
+              {
+                "type": "cable",
+                "midi": {
+                  "channel": 1,
+                  "cc": 3,
+                  "ccValue": 127,
+                  "type": "trigger"
+                },
+                "target": {
+                  "moduleId": 3,
+                  "portType": "output",
+                  "portId": 2
+                },
+                "cableColor": "#ffff00",
+                "comment": ""
+              },
+              {
+                "type": "cable",
+                "midi": {
+                  "channel": 1,
+                  "cc": 4,
+                  "ccValue": 127,
+                  "type": "trigger"
+                },
+                "target": {
+                  "moduleId": 3,
+                  "portType": "output",
+                  "portId": 3
+                },
+                "cableColor": "#ffff00",
+                "comment": ""
+              },
+              {
+                "type": "cable",
+                "midi": {
+                  "channel": 1,
+                  "cc": 5,
+                  "ccValue": 127,
+                  "type": "trigger"
+                },
+                "target": {
+                  "moduleId": 31,
+                  "portType": "input",
+                  "portId": 1
+                },
+                "comment": ""
+              }
+            ],
+            "driverName": "MidiCcTwoMessageToggle"
+          }
+        ]
+      },
+      "pos": [
+        20,
+        1
+      ]
+    },
+    {
+      "id": 48,
+      "plugin": "Core",
+      "version": "1.1.6",
+      "model": "Notes",
+      "params": [],
+      "text": "CC Trigger Demo Patch.\n\nSelect your MIDI controller in T7-MIDI.\n\nTry following CC messages:\n\nPress CC1 + CC5 to toggle a cable from VCO SIN -> VCA IN.\n\nPress CC2 + CC5 to toggle a cable from VCO TRI -> VCA IN.\n\nPress CC3 + CC5 to toggle a cable from VCO SAW -> VCA IN.\n\nPress CC4 + CC5 to toggle a cable from VCO SQR -> VCA IN.\n",
+      "pos": [
+        2,
+        1
+      ]
+    }
+  ],
+  "cables": [
+    {
+      "id": 36,
+      "outputModuleId": 32,
+      "outputId": 0,
+      "inputModuleId": 1,
+      "inputId": 0,
+      "color": "#0c8e15"
+    },
+    {
+      "id": 37,
+      "outputModuleId": 32,
+      "outputId": 0,
+      "inputModuleId": 1,
+      "inputId": 1,
+      "color": "#c91847"
+    },
+    {
+      "id": 38,
+      "outputModuleId": 31,
+      "outputId": 0,
+      "inputModuleId": 32,
+      "inputId": 1,
+      "color": "#c9b70e"
+    },
+    {
+      "id": 42,
+      "outputModuleId": 34,
+      "outputId": 0,
+      "inputModuleId": 31,
+      "inputId": 0,
+      "color": "#0c8e15"
+    },
+    {
+      "id": 44,
+      "outputModuleId": 35,
+      "outputId": 3,
+      "inputModuleId": 34,
+      "inputId": 4,
+      "color": "#c9b70e"
+    },
+    {
+      "id": 47,
+      "outputModuleId": 3,
+      "outputId": 0,
+      "inputModuleId": 31,
+      "inputId": 1,
+      "color": "#ffff00"
+    }
+  ]
+}

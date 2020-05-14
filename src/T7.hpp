@@ -3,12 +3,6 @@
 
 namespace T7 {
 
-struct T7MidiMessage {
-	midi::Message msg;
-	int driverId;
-	int deviceId;
-};
-
 struct T7EventLogger {
 	virtual ~T7EventLogger() {}
 	virtual void log(std::string s) {}
@@ -20,6 +14,23 @@ struct T7Event {
 	virtual void execute() {}
 	void log(std::string s) { if (logger) logger->log(s); }
 };
+
+
+enum class T7MessageType {
+	MIDI = 1
+};
+
+struct T7Message {
+	T7MessageType type;
+};
+
+struct T7MidiMessage : T7Message {
+	midi::Message msg;
+	int driverId;
+	int deviceId;
+	T7MidiMessage() { type = T7MessageType::MIDI; }
+};
+
 
 struct T7Driver {
 	struct PortDescriptor {
