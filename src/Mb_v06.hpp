@@ -67,7 +67,7 @@ struct FavoriteRadioButton : RadioButton {
 	Model *model = NULL;
 
 	struct FavoriteQuantity : Quantity {
-		float value;
+		float value = 0.f;
 		void setValue(float v) override { value = v; }
 		float getValue() override { return value; }
 		std::string getLabel() override { return "★"; }
@@ -123,16 +123,7 @@ struct BrowserListItem : OpaqueWidget {
 		doAction();
 	}
 
-	void doAction() {
-		event::Action eAction;
-		eAction.consume(this);
-		onAction(eAction);
-		if (eAction.isConsumed()) {
-			// deletes `this`
-			Mb::BrowserOverlay* overlay = getAncestorOfType<Mb::BrowserOverlay>();
-			overlay->hide();
-		}
-	}
+	void doAction();
 };
 
 
@@ -191,6 +182,7 @@ struct ModelItem : BrowserListItem {
 		// Move module nearest to the mouse position
 		//moduleWidget->box.pos = APP->scene->rack->mousePos.minus(moduleWidget->box.size.div(2));
 		//APP->scene->rack->requestModulePos(moduleWidget, moduleWidget->box.pos);
+		e.consume(this);
 	}
 };
 
@@ -489,6 +481,23 @@ struct ModuleBrowser : OpaqueWidget {
 
 // Implementations of inline methods above
 
+void BrowserListItem::doAction() {
+	event::Context context;
+	event::Action eAction;
+	eAction.context = &context;
+	//eAction.consume(this);
+	onAction(eAction);
+	if (eAction.isConsumed()) {
+		Mb::BrowserOverlay* overlay = getAncestorOfType<Mb::BrowserOverlay>();
+		overlay->hide();
+		ModuleBrowser *moduleBrowser = getAncestorOfType<ModuleBrowser>();
+		sAuthorFilter = "";
+		sTagFilter = -1;
+		moduleBrowser->clearSearch();
+		moduleBrowser->refreshSearch();
+	}
+}
+
 void AuthorItem::onAction(const event::Action &e) {
 	ModuleBrowser *moduleBrowser = getAncestorOfType<ModuleBrowser>();
 	sAuthorFilter = author;
@@ -542,41 +551,43 @@ void SearchModuleField::onChange(const event::Change& e) {
 }
 
 void SearchModuleField::onSelectKey(const event::SelectKey &e) {
-	switch (e.key) {
-		case GLFW_KEY_ESCAPE: {
-			BrowserOverlay* overlay = getAncestorOfType<BrowserOverlay>();
-			overlay->hide();
-			e.consume(this);
-			return;
-		} break;
-		case GLFW_KEY_UP: {
-			moduleBrowser->moduleList->incrementSelection(-1);
-			moduleBrowser->moduleList->scrollSelected();
-			e.consume(this);
-		} break;
-		case GLFW_KEY_DOWN: {
-			moduleBrowser->moduleList->incrementSelection(1);
-			moduleBrowser->moduleList->scrollSelected();
-			e.consume(this);
-		} break;
-		case GLFW_KEY_PAGE_UP: {
-			moduleBrowser->moduleList->incrementSelection(-5);
-			moduleBrowser->moduleList->scrollSelected();
-			e.consume(this);
-		} break;
-		case GLFW_KEY_PAGE_DOWN: {
-			moduleBrowser->moduleList->incrementSelection(5);
-			moduleBrowser->moduleList->scrollSelected();
-			e.consume(this);
-		} break;
-		case GLFW_KEY_ENTER: {
-			BrowserListItem *item = moduleBrowser->moduleList->getSelectedItem();
-			if (item) {
-				item->doAction();
+	if (e.action == GLFW_PRESS) {
+		switch (e.key) {
+			case GLFW_KEY_ESCAPE: {
+				BrowserOverlay* overlay = getAncestorOfType<BrowserOverlay>();
+				overlay->hide();
 				e.consume(this);
 				return;
-			}
-		} break;
+			} break;
+			case GLFW_KEY_UP: {
+				moduleBrowser->moduleList->incrementSelection(-1);
+				moduleBrowser->moduleList->scrollSelected();
+				e.consume(this);
+			} break;
+			case GLFW_KEY_DOWN: {
+				moduleBrowser->moduleList->incrementSelection(1);
+				moduleBrowser->moduleList->scrollSelected();
+				e.consume(this);
+			} break;
+			case GLFW_KEY_PAGE_UP: {
+				moduleBrowser->moduleList->incrementSelection(-5);
+				moduleBrowser->moduleList->scrollSelected();
+				e.consume(this);
+			} break;
+			case GLFW_KEY_PAGE_DOWN: {
+				moduleBrowser->moduleList->incrementSelection(5);
+				moduleBrowser->moduleList->scrollSelected();
+				e.consume(this);
+			} break;
+			case GLFW_KEY_ENTER: {
+				BrowserListItem *item = moduleBrowser->moduleList->getSelectedItem();
+				if (item) {
+					item->doAction();
+					e.consume(this);
+					return;
+				}
+			} break;
+		}
 	}
 
 	if (!e.isConsumed()) {
