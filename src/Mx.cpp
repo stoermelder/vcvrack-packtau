@@ -11,6 +11,7 @@ struct MxModule : Module {
 		INPUT_X,
 		INPUT_Y,
 		INPUT_LCLK,
+		INPUT_MCLK,
 		INPUT_RCLK,
 		NUM_INPUTS
 	};
@@ -22,17 +23,18 @@ struct MxModule : Module {
 		NUM_LIGHTS
 	};
 
-	/** [Stored to JSON] */
-	int panelTheme = 0;
-
 	bool active = false;
 	bool leftClickPress = false;
 	bool leftClickRelease = false;
+	bool middleClickPress = false;
+	bool middleClickRelease = false;
 	bool rightClickPress = false;
 	bool rightClickRelease = false;
 
 	dsp::BooleanTrigger leftClickPressTrigger;
 	dsp::BooleanTrigger leftClickReleaseTrigger;
+	dsp::BooleanTrigger middleClickPressTrigger;
+	dsp::BooleanTrigger middleClickReleaseTrigger;
 	dsp::BooleanTrigger rightClickPressTrigger;
 	dsp::BooleanTrigger rightClickReleaseTrigger;
 
@@ -51,6 +53,13 @@ struct MxModule : Module {
 		if (leftClickReleaseTrigger.process(!lclk)) {
 			leftClickRelease = true;
 		}
+		bool mclk = inputs[INPUT_MCLK].getVoltage() > 0.f;
+		if (middleClickPressTrigger.process(mclk)) {
+			middleClickPress = true;
+		}
+		if (middleClickReleaseTrigger.process(!mclk)) {
+			middleClickRelease = true;
+		}
 		bool rclk = inputs[INPUT_RCLK].getVoltage() > 0.f;
 		if (rightClickPressTrigger.process(rclk)) {
 			rightClickPress = true;
@@ -59,27 +68,17 @@ struct MxModule : Module {
 			rightClickRelease = true;
 		}
 	}
-
-	json_t* dataToJson() override {
-		json_t* rootJ = json_object();
-		json_object_set_new(rootJ, "panelTheme", json_integer(panelTheme));
-		return rootJ;
-	}
-
-	void dataFromJson(json_t* rootJ) override {
-		panelTheme = json_integer_value(json_object_get(rootJ, "panelTheme"));
-	}
 };
 
 
 struct ActiveButton : TL1105 {
 	MxModule* module;
-    void step() override {
-        TL1105::step();
-        if (module) {
-            module->lights[MxModule::LIGHT_ACTIVE].setBrightness(module->active);
-        }
-    }
+	void step() override {
+		TL1105::step();
+		if (module) {
+			module->lights[MxModule::LIGHT_ACTIVE].setBrightness(module->active);
+		}
+	}
 	void onButton(const event::Button& e) override {
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
 			module->active ^= true;
@@ -99,7 +98,8 @@ struct MxWidget : ModuleWidget {
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Mx.svg")));
 		this->module = module;
 
-		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 137.0f), module, MxModule::INPUT_LCLK));
+		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 98.0f), module, MxModule::INPUT_LCLK));
+		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 137.0f), module, MxModule::INPUT_MCLK));
 		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 176.0f), module, MxModule::INPUT_RCLK));
 		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 214.9f), module, MxModule::INPUT_X));
 		addInput(createInputCentered<PJ301MPort>(Vec(15.f, 253.8f), module, MxModule::INPUT_Y));
@@ -151,6 +151,14 @@ struct MxWidget : ModuleWidget {
 		if (module->leftClickRelease) {
 			module->leftClickRelease = false;
 			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+		}
+		if (module->middleClickPress) {
+			module->middleClickPress = false;
+			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
+		}
+		if (module->middleClickRelease) {
+			module->middleClickRelease = false;
+			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
 		}
 		if (module->rightClickPress) {
 			module->rightClickPress = false;
