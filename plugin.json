@@ -40,6 +40,12 @@
 			"name": "MX",
 			"description": "",
 			"tags": ["Utility"]
+		},
+		{
+			"slug": "Lo",
+			"name": "LO",
+			"description": "",
+			"tags": ["Utility"]
 		}
 	]
 }
