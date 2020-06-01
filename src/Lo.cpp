@@ -31,6 +31,7 @@ struct LoContainer : widget::Widget {
 
 	void draw(const DrawArgs& args) override {
 		if (module && module->active) {
+			// Draw lights
 			std::queue<Widget*> q;
 			q.push(APP->scene->rack->moduleContainer);
 			while (!q.empty()) {
@@ -54,6 +55,13 @@ struct LoContainer : widget::Widget {
 				for (Widget* w1 : w->children) {
 					q.push(w1);
 				}
+			}
+
+			// Draw cable plugs
+			for (widget::Widget* w : APP->scene->rack->cableContainer->children) {
+				CableWidget* cw = dynamic_cast<CableWidget*>(w);
+				assert(cw);
+				cw->drawPlugs(args);
 			}
 		}
 		Widget::draw(args);
