@@ -17,11 +17,24 @@ struct LoModule : Module {
 		NUM_LIGHTS
 	};
 
-    bool active = false;
+	bool active = false;
+
+	/** [Stored to JSON] */
+	float dim = 0.8f;
 
 	LoModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		onReset();
+	}
+
+	json_t* dataToJson() override {
+		json_t *rootJ = json_object();
+		json_object_set_new(rootJ, "dim", json_real(dim));
+		return rootJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		dim = json_real_value(json_object_get(rootJ, "dim"));
 	}
 };
 
@@ -31,6 +44,13 @@ struct LoContainer : widget::Widget {
 
 	void draw(const DrawArgs& args) override {
 		if (module && module->active) {
+			// Dim layer
+			box = parent->box.zeroPos();
+			nvgBeginPath(args.vg);
+			nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+			nvgFillColor(args.vg, nvgRGBA(0x00, 0x00, 0x00, (char)(255.f * module->dim)));
+			nvgFill(args.vg);
+
 			// Draw lights
 			std::queue<Widget*> q;
 			q.push(APP->scene->rack->moduleContainer);
@@ -66,11 +86,12 @@ struct LoContainer : widget::Widget {
 		}
 		Widget::draw(args);
 	}
-
+	
 	void onHoverKey(const event::HoverKey& e) override {
 		if (e.action == GLFW_PRESS && e.key == GLFW_KEY_X && (e.mods & RACK_MOD_MASK) == (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) {
 			module->active ^= true;
 
+			/*
 			std::queue<Widget*> q;
 			q.push(APP->scene->rack->moduleContainer);
 			while (!q.empty()) {
@@ -92,6 +113,7 @@ struct LoContainer : widget::Widget {
 					w->visible = !module->active;
 				}
 			}
+			*/
 		}
 		Widget::onHoverKey(e);
 	}
@@ -133,8 +155,55 @@ struct LoWidget : ModuleWidget {
 	}
 
 	void appendContextMenu(Menu* menu) override {
+		LoModule* module = dynamic_cast<LoModule*>(this->module);
+
+		struct DimSlider : ui::Slider {
+			struct DimQuantity : Quantity {
+				LoModule* module;
+				DimQuantity(LoModule* module) {
+					this->module = module;
+				}
+				void setValue(float value) override {
+					module->dim = math::clamp(value, 0.f, 1.f);
+				}
+				float getValue() override {
+					return module->dim;
+				}
+				float getDefaultValue() override {
+					return 0.8f;
+				}
+				float getDisplayValue() override {
+					return getValue() * 100;
+				}
+				void setDisplayValue(float displayValue) override {
+					setValue(displayValue / 100);
+				}
+				std::string getLabel() override {
+					return "Dim";
+				}
+				std::string getUnit() override {
+					return "%";
+				}
+				float getMaxValue() override {
+					return 1.f;
+				}
+				float getMinValue() override {
+					return 0.f;
+				}
+			};
+
+			DimSlider(LoModule* module) {
+				box.size.x = 180.0f;
+				quantity = new DimQuantity(module);
+			}
+			~DimSlider() {
+				delete quantity;
+			}
+		};
+
 		menu->addChild(new MenuSeparator());
 		menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Hotkey Ctrl/Cmd+Alt+X"));
+		menu->addChild(new DimSlider(module));
 	}
 };
 
