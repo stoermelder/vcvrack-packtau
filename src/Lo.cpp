@@ -4,7 +4,6 @@ namespace Lo {
 
 struct LoModule : Module {
 	enum ParamIds {
-		PARAM_ACTIVE,
 		NUM_PARAMS
 	};
 	enum InputIds {
@@ -14,6 +13,7 @@ struct LoModule : Module {
 		NUM_OUTPUTS
 	};
 	enum LightIds {
+		LIGHT_ENABLED,
 		NUM_LIGHTS
 	};
 
@@ -21,44 +21,13 @@ struct LoModule : Module {
 
 	LoModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(PARAM_ACTIVE, 0.f, 1.f, 0.f, "Active");
 		onReset();
-		params[PARAM_ACTIVE].setValue(0.f);
 	}
 };
 
 
-struct ActiveButton : TL1105 {
+struct LoContainer : widget::Widget {
 	LoModule* module;
-
-	void onButton(const event::Button& e) override {
-		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
-			module->active ^= true;
-
-			std::queue<Widget*> q;
-			q.push(APP->scene->rack->moduleContainer);
-			while (!q.empty()) {
-				Widget* w = q.front();
-				q.pop();
-
-				ModuleWidget* sw = dynamic_cast<ModuleWidget*>(w);
-				if (sw && sw->module != module) {
-					sw->visible = !module->active;
-				}
-
-				for (Widget* w1 : w->children) {
-					q.push(w1);
-				}
-			}
-
-			for (Widget* w : APP->scene->rack->children) {
-				if (w != APP->scene->rack->moduleContainer && w != APP->scene->rack->railFb) {
-					w->visible = !module->active;
-				}
-			}
-		}
-		TL1105::onButton(e);
-	}
 
 	void draw(const DrawArgs& args) override {
 		if (module && module->active) {
@@ -87,19 +56,77 @@ struct ActiveButton : TL1105 {
 				}
 			}
 		}
-		TL1105::draw(args);
+		Widget::draw(args);
+	}
+
+	void onHoverKey(const event::HoverKey& e) override {
+		if (e.action == GLFW_PRESS && e.key == GLFW_KEY_X && (e.mods & RACK_MOD_MASK) == (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) {
+			module->active ^= true;
+
+			std::queue<Widget*> q;
+			q.push(APP->scene->rack->moduleContainer);
+			while (!q.empty()) {
+				Widget* w = q.front();
+				q.pop();
+
+				ModuleWidget* sw = dynamic_cast<ModuleWidget*>(w);
+				if (sw && sw->module != module) {
+					sw->visible = !module->active;
+				}
+
+				for (Widget* w1 : w->children) {
+					q.push(w1);
+				}
+			}
+
+			for (Widget* w : APP->scene->rack->children) {
+				if (w != this) {
+					w->visible = !module->active;
+				}
+			}
+		}
+		Widget::onHoverKey(e);
 	}
 };
 
 struct LoWidget : ModuleWidget {
+	LoContainer* loContainer;
+	bool enabled = false;
+
 	LoWidget(LoModule* module) {
 		setModule(module);
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Lo.svg")));
-		this->module = module;
 
-		ActiveButton* activeButton = createParamCentered<ActiveButton>(Vec(15.f, 306.7f), module, LoModule::PARAM_ACTIVE);
-		activeButton->module = module;
-		addParam(activeButton);
+		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 291.3f), module, LoModule::LIGHT_ENABLED));
+
+		if (module) {enabled = registerSingleton("Lo", this);
+			if (enabled) {
+				loContainer = new LoContainer;
+				loContainer->module = module;
+				// This is where the magic happens: add a new widget on top-level to Rack
+				APP->scene->rack->addChild(loContainer);
+			}
+		}
+	}
+
+	~LoWidget() {
+		if (enabled && loContainer) {
+			unregisterSingleton("Lo", this);
+			APP->scene->rack->removeChild(loContainer);
+			delete loContainer;
+		}
+	}
+
+	void step() override {
+		if (module) {
+			module->lights[LoModule::LIGHT_ENABLED].setBrightness(enabled);
+		}
+		ModuleWidget::step();
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		menu->addChild(new MenuSeparator());
+		menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Hotkey Ctrl/Cmd+Alt+X"));
 	}
 };
 
