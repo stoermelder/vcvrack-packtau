@@ -61,7 +61,7 @@ struct ActiveButton : TL1105 {
 	}
 
 	void draw(const DrawArgs& args) override {
-		if (module->active) {
+		if (module && module->active) {
 			std::queue<Widget*> q;
 			q.push(APP->scene->rack->moduleContainer);
 			while (!q.empty()) {
