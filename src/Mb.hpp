@@ -21,12 +21,12 @@ struct BrowserOverlay : widget::OpaqueWidget {
 	void step() override {
 		switch (*mode) {
 			case MODE::V06:
-				mbV06->visible = visible && true;
-				mbV1->visible = visible && false;
+				if (visible) mbV06->show(); else mbV06->hide();
+				mbV1->hide();
 				break;
 			case MODE::V1:
-				mbV06->visible = visible && false;
-				mbV1->visible = visible && true;
+				mbV06->hide();
+				if (visible) mbV1->show(); else mbV1->hide();
 				break;
 		}
 

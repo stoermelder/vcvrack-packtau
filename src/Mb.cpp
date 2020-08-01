@@ -182,7 +182,7 @@ struct MbWidget : ModuleWidget {
 
 		menu->addChild(new MenuSeparator());
 		menu->addChild(construct<ModeV06Item>(&MenuItem::text, "v0.6", &ModeV06Item::module, module));
-		menu->addChild(construct<ModeV1Item>(&MenuItem::text, "v1", &ModeV1Item::module, module));
+		menu->addChild(construct<ModeV1Item>(&MenuItem::text, "v1 mod", &ModeV1Item::module, module));
 	}
 };
 

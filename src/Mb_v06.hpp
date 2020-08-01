@@ -315,6 +315,11 @@ struct SearchModuleField : TextField {
 	ModuleBrowser *moduleBrowser;
 	void onChange(const event::Change& e) override;
 	void onSelectKey(const event::SelectKey &e) override;
+
+	void onShow(const event::Show& e) override {
+		selectAll();
+		TextField::onShow(e);
+	}
 };
 
 
