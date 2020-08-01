@@ -40,12 +40,6 @@
 			"name": "MX",
 			"description": "Module for controlling the mouse pointer and mouse clicks by CV, useful for MIDI-controllers.",
 			"tags": ["Utility"]
-		},
-		{
-			"slug": "Lo",
-			"name": "LO",
-			"description": "\"Lights out\"-module for Rack, turns everything black except leds and cable plugs.",
-			"tags": ["Utility"]
 		}
 	]
 }
