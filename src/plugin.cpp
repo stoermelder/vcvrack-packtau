@@ -11,6 +11,7 @@ void init(rack::Plugin* p) {
 
 	p->addModel(modelMb);
 	p->addModel(modelMx);
+	p->addModel(modelPm);
 
 	pluginSettings.readFromJson();
 }

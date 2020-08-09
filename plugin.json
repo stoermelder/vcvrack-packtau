@@ -40,6 +40,12 @@
 			"name": "MX",
 			"description": "Module for controlling the mouse pointer and mouse clicks by CV, useful for MIDI-controllers.",
 			"tags": ["Utility"]
+		},
+		{
+			"slug": "Pm",
+			"name": "PM",
+			"description": "Provides a context menu on cable-ports",
+			"tags": ["Utility"]
 		}
 	]
 }
