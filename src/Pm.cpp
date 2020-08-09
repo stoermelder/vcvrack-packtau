@@ -26,8 +26,6 @@ struct PmModule : Module {
 };
 
 struct PmContainer : widget::Widget {
-	ModuleWidget* mw;
-
 	struct ChannelsItem : MenuItem {
 		PortWidget* pw;
 		void step() override {
@@ -101,6 +99,7 @@ struct PmContainer : widget::Widget {
 		}
 	};
 
+	/*
 	struct DisconnectCableSubMenuItem : MenuItem {
 		struct DisconnectCableMenuItem : MenuItem {
 		};
@@ -118,6 +117,7 @@ struct PmContainer : widget::Widget {
 			return menu;
 		}
 	};
+	*/
 
 	struct GotoInputItem : MenuItem {
 		PortWidget* pw;
@@ -146,14 +146,15 @@ struct PmContainer : widget::Widget {
 	void onButton(const event::Button& e) override {
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
 			Widget* w = APP->event->getHoveredWidget();
-			if (!w) return;
+			if (!w) goto j;
 			PortWidget* pw = dynamic_cast<PortWidget*>(w);
-			if (!pw) return;
-			e.consume(this);
+			if (!pw) goto j;
+			int c = APP->scene->rack->getCablesOnPort(pw).size();
+			if (c == 0) goto j;
 
+			e.consume(this);
 			Menu* menu = createMenu();
 			if (pw->type == PortWidget::Type::OUTPUT) {
-				int c = APP->scene->rack->getCablesOnPort(pw).size();
 				menu->addChild(createMenuLabel("Output-port"));
 				menu->addChild(construct<ChannelsItem>(&MenuItem::text, "Output channels", &ChannelsItem::pw, pw));
 				if (c == 1) menu->addChild(construct<GotoInputItem>(&MenuItem::text, "Go to input-port", &GotoInputItem::pw, pw));
@@ -169,6 +170,8 @@ struct PmContainer : widget::Widget {
 				menu->addChild(construct<NextColorItem>(&MenuItem::text, "Next color", &NextColorItem::pw, pw));
 			}
 		}
+
+		j:
 		Widget::onButton(e);
 	}
 };
@@ -187,7 +190,6 @@ struct PmWidget : ModuleWidget {
 			active = registerSingleton("Pm", this);
 			if (active) {
 				pmContainer = new PmContainer;
-				pmContainer->mw = this;
 				// This is where the magic happens: add a new widget on top-level to Rack
 				APP->scene->rack->addChild(pmContainer);
 			}
