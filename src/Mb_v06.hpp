@@ -179,10 +179,14 @@ struct ModelItem : BrowserListItem {
 		h->setModule(moduleWidget);
 		APP->history->push(h);
 
+		// Hide Module Browser
+		APP->scene->moduleBrowser->hide();
+		APP->event->setSelected(moduleWidget);
+
 		// Move module nearest to the mouse position
 		//moduleWidget->box.pos = APP->scene->rack->mousePos.minus(moduleWidget->box.size.div(2));
 		//APP->scene->rack->requestModulePos(moduleWidget, moduleWidget->box.pos);
-		e.consume(this);
+		e.consume(moduleWidget);
 	}
 };
 
@@ -493,8 +497,8 @@ void BrowserListItem::doAction() {
 	//eAction.consume(this);
 	onAction(eAction);
 	if (eAction.isConsumed()) {
-		Mb::BrowserOverlay* overlay = getAncestorOfType<Mb::BrowserOverlay>();
-		overlay->hide();
+		//Mb::BrowserOverlay* overlay = getAncestorOfType<Mb::BrowserOverlay>();
+		//overlay->hide();
 		ModuleBrowser *moduleBrowser = getAncestorOfType<ModuleBrowser>();
 		sAuthorFilter = "";
 		sTagFilter = -1;
@@ -561,6 +565,7 @@ void SearchModuleField::onSelectKey(const event::SelectKey &e) {
 			case GLFW_KEY_ESCAPE: {
 				BrowserOverlay* overlay = getAncestorOfType<BrowserOverlay>();
 				overlay->hide();
+				APP->event->setSelected(NULL);
 				e.consume(this);
 				return;
 			} break;
