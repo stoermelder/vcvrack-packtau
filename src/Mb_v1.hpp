@@ -30,6 +30,10 @@
 namespace Mb {
 namespace v1 {
 
+#define PREVIEW_MIN 0.2f
+#define PREVIEW_MAX 1.6f
+
+
 // Static functions
 
 static float modelScore(plugin::Model* model, const std::string& search) {
@@ -548,6 +552,18 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	void onShow(const event::Show& e) override {
 		refresh();
 		OpaqueWidget::onShow(e);
+	}
+
+	void onHoverScroll(const event::HoverScroll& e) override {
+		if ((APP->window->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL) {
+			// Increase zoom
+			float zoomDelta = e.scrollDelta.y / 50.f / 12.f;
+			v1::modelBoxZoom = math::clamp(v1::modelBoxZoom + zoomDelta, PREVIEW_MIN, PREVIEW_MAX);
+			e.consume(this);
+			return;
+		}
+
+		OpaqueWidget::onHoverScroll(e);
 	}
 };
 

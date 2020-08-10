@@ -135,7 +135,7 @@ struct MbWidget : ModuleWidget {
 				struct ZoomSlider : ui::Slider {
 					struct ZoomQuantity : Quantity {
 						void setValue(float value) override {
-							v1::modelBoxZoom = math::clamp(value, 0.2f, 1.4f);
+							v1::modelBoxZoom = math::clamp(value, PREVIEW_MIN, PREVIEW_MAX);
 						}
 						float getValue() override {
 							return v1::modelBoxZoom;
