@@ -266,6 +266,50 @@ struct ModelBox : widget::OpaqueWidget {
 };
 
 
+struct ModelZoomSlider : ui::Slider {
+	struct ModelZoomQuantity : Quantity {
+		void setValue(float value) override {
+			v1::modelBoxZoom = math::clamp(value, PREVIEW_MIN, PREVIEW_MAX);
+		}
+		float getValue() override {
+			return v1::modelBoxZoom;
+		}
+		float getDefaultValue() override {
+			return 0.9f;
+		}
+		float getDisplayValue() override {
+			return getValue() * 100;
+		}
+		void setDisplayValue(float displayValue) override {
+			setValue(displayValue / 100);
+		}
+		std::string getLabel() override {
+			return "Preview";
+		}
+		std::string getUnit() override {
+			return "";
+		}
+		int getDisplayPrecision() override {
+			return 3;
+		}
+		float getMaxValue() override {
+			return 1.4f;
+		}
+		float getMinValue() override {
+			return 0.2f;
+		}
+	};
+
+	ModelZoomSlider() {
+		box.size.x = 180.0f;
+		quantity = new ModelZoomQuantity();
+	}
+	~ModelZoomSlider() {
+		delete quantity;
+	}
+};
+
+
 struct BrandItem : ui::MenuItem {
 	void onAction(const event::Action& e) override;
 	void step() override;
@@ -406,6 +450,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	BrowserSidebar* sidebar;
 	ui::ScrollWidget* modelScroll;
 	ui::Label* modelLabel;
+	ModelZoomSlider* modelZoomSlider;
 	ui::MarginLayout* modelMargin;
 	ui::SequentialLayout* modelContainer;
 
@@ -422,6 +467,9 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		// modelLabel->fontSize = 16;
 		// modelLabel->box.size.x = 400;
 		addChild(modelLabel);
+
+		modelZoomSlider = new ModelZoomSlider;
+		addChild(modelZoomSlider);
 
 		modelScroll = new ui::ScrollWidget;
 		addChild(modelScroll);
@@ -453,6 +501,8 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		sidebar->box.size.y = box.size.y;
 
 		modelLabel->box.pos = sidebar->box.getTopRight().plus(math::Vec(5, 5));
+
+		modelZoomSlider->box.pos = Vec(box.size.x - modelZoomSlider->box.size.x - 5, 5);
 
 		modelScroll->box.pos = sidebar->box.getTopRight().plus(math::Vec(0, 30));
 		modelScroll->box.size = box.size.minus(modelScroll->box.pos);

@@ -131,51 +131,7 @@ struct MbWidget : ModuleWidget {
 
 			Menu* createChildMenu() override {
 				Menu* menu = new Menu;
-
-				struct ZoomSlider : ui::Slider {
-					struct ZoomQuantity : Quantity {
-						void setValue(float value) override {
-							v1::modelBoxZoom = math::clamp(value, PREVIEW_MIN, PREVIEW_MAX);
-						}
-						float getValue() override {
-							return v1::modelBoxZoom;
-						}
-						float getDefaultValue() override {
-							return 0.9f;
-						}
-						float getDisplayValue() override {
-							return getValue() * 100;
-						}
-						void setDisplayValue(float displayValue) override {
-							setValue(displayValue / 100);
-						}
-						std::string getLabel() override {
-							return "Preview";
-						}
-						std::string getUnit() override {
-							return "";
-						}
-						int getDisplayPrecision() override {
-							return 3;
-						}
-						float getMaxValue() override {
-							return 1.4f;
-						}
-						float getMinValue() override {
-							return 0.2f;
-						}
-					};
-
-					ZoomSlider() {
-						box.size.x = 180.0f;
-						quantity = new ZoomQuantity();
-					}
-					~ZoomSlider() {
-						delete quantity;
-					}
-				};
-
-				menu->addChild(new ZoomSlider);
+				menu->addChild(new v1::ModelZoomSlider);
 				return menu;
 			}
 		};
