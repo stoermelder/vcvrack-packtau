@@ -121,7 +121,9 @@ struct ModelBox : widget::OpaqueWidget {
 	ui::Tooltip* tooltip = NULL;
 	/** Lazily created */
 	widget::FramebufferWidget* previewFb = NULL;
+	widget::ZoomWidget* zoomWidget = NULL;
 	float modelBoxZoom = -1.f;
+	float modelBoxWidth = -1.f;
 
 	void setModel(plugin::Model* model) {
 		this->model = model;
@@ -131,15 +133,17 @@ struct ModelBox : widget::OpaqueWidget {
 
 	void step() override {
 		if (modelBoxZoom != v1::modelBoxZoom) {
-			deletePreview();
+			//deletePreview();
 			modelBoxZoom = v1::modelBoxZoom;
 			// Approximate size as 10HP before we know the actual size.
 			// We need a nonzero size, otherwise the parent widget will consider it not in the draw bounds, so its preview will not be lazily created.
-			box.size.x = 10 * RACK_GRID_WIDTH * modelBoxZoom;
+			box.size.x = (modelBoxWidth < 0 ? 10 * RACK_GRID_WIDTH : modelBoxWidth) * modelBoxZoom;
 			box.size.y = RACK_GRID_HEIGHT * modelBoxZoom;
 			box.size = box.size.ceil();
 
 			previewWidget->box.size.y = std::ceil(RACK_GRID_HEIGHT * modelBoxZoom);
+
+			if (previewFb) sizePreview();
 		}
 		widget::OpaqueWidget::step();
 	}
@@ -152,18 +156,30 @@ struct ModelBox : widget::OpaqueWidget {
 		}
 		previewWidget->addChild(previewFb);
 
-		widget::ZoomWidget* zoomWidget = new widget::ZoomWidget;
-		zoomWidget->setZoom(modelBoxZoom);
+		zoomWidget = new widget::ZoomWidget;
 		previewFb->addChild(zoomWidget);
 
 		ModuleWidget* moduleWidget = model->createModuleWidgetNull();
 		zoomWidget->addChild(moduleWidget);
+		// Save the width, used for correct width of blank before rendered
+		modelBoxWidth = moduleWidget->box.size.x;
 
+		sizePreview();
+	}
+
+	void sizePreview() {
+		zoomWidget->setZoom(modelBoxZoom);
+
+		Widget* moduleWidget = zoomWidget->children.front();
 		zoomWidget->box.size.x = moduleWidget->box.size.x * modelBoxZoom;
 		zoomWidget->box.size.y = RACK_GRID_HEIGHT * modelBoxZoom;
 		previewWidget->box.size.x = std::ceil(zoomWidget->box.size.x);
 
 		box.size.x = previewWidget->box.size.x;
+
+		// Not sure how to do this corretly but works for now
+		previewFb->fbBox = previewWidget->box;
+		previewFb->dirty = true;
 	}
 
 	void deletePreview() {
