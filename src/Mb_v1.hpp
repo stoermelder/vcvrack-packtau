@@ -170,15 +170,14 @@ struct ModelBox : widget::OpaqueWidget {
 	void sizePreview() {
 		zoomWidget->setZoom(modelBoxZoom);
 
-		Widget* moduleWidget = zoomWidget->children.front();
-		zoomWidget->box.size.x = moduleWidget->box.size.x * modelBoxZoom;
+		zoomWidget->box.size.x = modelBoxWidth * modelBoxZoom;
 		zoomWidget->box.size.y = RACK_GRID_HEIGHT * modelBoxZoom;
 		previewWidget->box.size.x = std::ceil(zoomWidget->box.size.x);
+		previewWidget->box.size.y = std::ceil(zoomWidget->box.size.y);
+		box.size = previewWidget->box.size;
 
-		box.size.x = previewWidget->box.size.x;
-
-		// Not sure how to do this corretly but works for now
-		previewFb->fbBox = previewWidget->box;
+		// Not sure how to do this correctly but works for now
+		previewFb->fbBox.size = previewWidget->box.size;
 		previewFb->dirty = true;
 	}
 
@@ -293,10 +292,10 @@ struct ModelZoomSlider : ui::Slider {
 			return 3;
 		}
 		float getMaxValue() override {
-			return 1.4f;
+			return PREVIEW_MAX;
 		}
 		float getMinValue() override {
-			return 0.2f;
+			return PREVIEW_MIN;
 		}
 	};
 
