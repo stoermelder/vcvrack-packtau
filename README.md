@@ -6,12 +6,12 @@
 ![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat-square)
 ![Language](https://img.shields.io/badge/language-C++-yellow.svg?style=flat-square)
 
-The PackTau plugin gives you some experimental modules for [VCV Rack](https://www.vcvrack.com).
+The PackTau plugin gives you some experimental modules for [VCV Rack](https://www.vcvrack.com).  
+If you like my modules and like to support my work consider donating to https://paypal.me/stoermelder!
 
-These modules are purely experimental and might stop working at any update for VCV Rack as they make have usage of unstable API. Also, please expect breaking changes at any time. "Nightly builds" of the latest commit can be downloaded [here](https://github.com/stoermelder/vcvrack-packtau/releases/tag/Nightly).
+Modules of PackTau (aka "Test") are purely experimental and might stop working at any update for VCV Rack as they make heavy usage of unstable API. Also, please expect breaking changes at any time. **[Recent builds](https://github.com/stoermelder/vcvrack-packtau/releases/tag/Nightly)** of the latest commit are available for all supported operating systems.
 
 Feel free to contact me or create a GitHub issue if you have any problems or questions!  
-If you like my modules consider donating to https://paypal.me/stoermelder. Thank you for your support!
 
 ## Building
 

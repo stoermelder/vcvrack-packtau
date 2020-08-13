@@ -1,0 +1,4 @@
+plugin.dll
+.vscode/*
+build/src/*
+dist/*
