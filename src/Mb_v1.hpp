@@ -679,7 +679,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 			e.consume(this);
 			return;
 		}
-
+		
 		OpaqueWidget::onHoverScroll(e);
 	}
 };
@@ -746,14 +746,24 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 				Mb::BrowserOverlay* overlay = getAncestorOfType<Mb::BrowserOverlay>();
 				overlay->hide();
 				e.consume(this);
-			} break;
+				break;
+			} 
 			case GLFW_KEY_BACKSPACE: {
 				if (text == "") {
 					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 					browser->clear();
 					e.consume(this);
 				}
-			} break;
+				break;
+			} 
+			case GLFW_KEY_SPACE: {
+				if (string::trim(text) == "") {
+					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+					browser->favorites ^= true;
+					e.consume(this);
+				}
+				break;
+			}
 		}
 	}
 
