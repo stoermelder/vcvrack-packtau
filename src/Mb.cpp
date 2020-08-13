@@ -81,7 +81,7 @@ struct MbWidget : ModuleWidget {
 		setModule(module);
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Mb.svg")));
 
-		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 291.3f), module, MbModule::LIGHT_ACTIVE));
+		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 330.0f), module, MbModule::LIGHT_ACTIVE));
 
 		if (module) {
 			active = registerSingleton("Mb", this);

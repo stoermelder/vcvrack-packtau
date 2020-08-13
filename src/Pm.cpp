@@ -184,7 +184,7 @@ struct PmWidget : ModuleWidget {
 		setModule(module);
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Pm.svg")));
 
-		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 291.3f), module, PmModule::LIGHT_ACTIVE));
+		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(15.f, 330.0f), module, PmModule::LIGHT_ACTIVE));
 
 		if (module) {
 			active = registerSingleton("Pm", this);
