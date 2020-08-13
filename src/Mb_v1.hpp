@@ -258,7 +258,8 @@ struct ModelBox : widget::OpaqueWidget {
 
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
 			Menu* menu = createMenu();
-			menu->addChild(construct<MenuLabel>(&MenuLabel::text, string::f("%s", model->name.c_str())));
+			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->plugin->name.c_str()));
+			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->name.c_str()));
 			menu->addChild(new FavoriteModelItem(model));
 			e.consume(this);
 		}
