@@ -58,11 +58,18 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 	return score;
 }
 
-static bool isModelVisible(plugin::Model* model, const std::string& search, const std::string& brand, int tagId) {
+static bool isModelVisible(plugin::Model* model, const std::string& search, const bool& favourite, const std::string& brand, int tagId) {
 	// Filter search query
 	if (search != "") {
 		float score = modelScore(model, search);
 		if (score <= 0.f)
+			return false;
+	}
+
+	// Filter favourite
+	if (favourite) {
+		auto it = favoriteModels.find(model);
+		if (it == favoriteModels.end())
 			return false;
 	}
 
@@ -114,6 +121,25 @@ V get_default(const std::map<K, V>& m, const K& key, const V& def) {
 
 static float modelBoxZoom = 0.9f;
 
+
+struct FavoriteModelItem : MenuItem {
+	plugin::Model* model;
+	bool isSet = false;
+
+	FavoriteModelItem(plugin::Model* model) {
+		text = "Favorite";
+		this->model = model;
+		auto it = favoriteModels.find(model);
+		isSet = it != favoriteModels.end();
+	}
+
+	void onAction(const event::Action& e) override;
+
+	void step() override {
+		rightText = CHECKMARK(isSet);
+		MenuItem::step();
+	}
+};
 
 struct ModelBox : widget::OpaqueWidget {
 	plugin::Model* model;
@@ -221,14 +247,20 @@ struct ModelBox : widget::OpaqueWidget {
 
 	void onButton(const event::Button& e) override {
 		OpaqueWidget::onButton(e);
-		if (e.getTarget() != this)
-			return;
+		//if (e.getTarget() != this)
+		//	return;
 
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
 			ModuleWidget* mw = chooseModel(model);
-
 			// Pretend the moduleWidget was clicked so it can be dragged in the RackWidget
 			e.consume(mw);
+		}
+
+		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
+			Menu* menu = createMenu();
+			menu->addChild(construct<MenuLabel>(&MenuLabel::text, string::f("%s", model->name.c_str())));
+			menu->addChild(new FavoriteModelItem(model));
+			e.consume(this);
 		}
 	}
 
@@ -309,6 +341,12 @@ struct ModelZoomSlider : ui::Slider {
 };
 
 
+struct FavoriteItem : ui::MenuItem {
+	void onAction(const event::Action& e) override;
+	void step() override;
+};
+
+
 struct BrandItem : ui::MenuItem {
 	void onAction(const event::Action& e) override;
 	void step() override;
@@ -353,6 +391,7 @@ struct ClearButton : ui::Button {
 struct BrowserSidebar : widget::Widget {
 	BrowserSearchField* searchField;
 	ClearButton* clearButton;
+	ui::List* favoriteList;
 	ui::Label* tagLabel;
 	ui::List* tagList;
 	ui::ScrollWidget* tagScroll;
@@ -369,6 +408,14 @@ struct BrowserSidebar : widget::Widget {
 		clearButton = new ClearButton;
 		clearButton->text = "Reset filters";
 		addChild(clearButton);
+
+		// Favorites
+		favoriteList = new ui::List;
+		addChild(favoriteList);
+
+		FavoriteItem* favoriteItem = new FavoriteItem;
+		favoriteItem->text = "Favorites";
+		favoriteList->addChild(favoriteItem);
 
 		// Tag label
 		tagLabel = new ui::Label;
@@ -423,10 +470,13 @@ struct BrowserSidebar : widget::Widget {
 		clearButton->box.pos = searchField->box.getBottomLeft();
 		clearButton->box.size.x = box.size.x;
 
-		float listHeight = (box.size.y - clearButton->box.getBottom()) / 2;
+		favoriteList->box.pos = clearButton->box.getBottomLeft();
+		favoriteList->box.size.x = box.size.x;
+
+		float listHeight = (box.size.y - favoriteList->box.getBottom()) / 2;
 		listHeight = std::floor(listHeight);
 
-		tagLabel->box.pos = clearButton->box.getBottomLeft();
+		tagLabel->box.pos = favoriteList->box.getBottomLeft();
 		tagLabel->box.size.x = box.size.x;
 		tagScroll->box.pos = tagLabel->box.getBottomLeft();
 		tagScroll->box.size.y = listHeight - tagLabel->box.size.y;
@@ -454,6 +504,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	ui::SequentialLayout* modelContainer;
 
 	std::string search;
+	bool favorites;
 	std::string brand;
 	int tagId = -1;
 
@@ -524,7 +575,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : modelContainer->children) {
 			ModelBox* m = dynamic_cast<ModelBox*>(w);
 			assert(m);
-			m->visible = isModelVisible(m->model, search, brand, tagId);
+			m->visible = isModelVisible(m->model, search, favorites, brand, tagId);
 		}
 
 		// Sort ModelBoxes
@@ -564,13 +615,13 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : modelContainer->children) {
 			ModelBox* m = dynamic_cast<ModelBox*>(w);
 			assert(m);
-			if (isModelVisible(m->model, search, "", -1))
+			if (isModelVisible(m->model, search, favorites, "", -1))
 				filteredModels.push_back(m->model);
 		}
 
 		auto hasModel = [&](const std::string & brand, int tagId) -> bool {
 			for (plugin::Model* model : filteredModels) {
-				if (isModelVisible(model, "", brand, tagId))
+				if (isModelVisible(model, "", favorites, brand, tagId))
 					return true;
 			}
 			return false;
@@ -609,6 +660,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	void clear() {
 		search = "";
 		sidebar->searchField->setText("");
+		favorites = false;
 		brand = "";
 		tagId = -1;
 		refresh();
@@ -635,6 +687,27 @@ struct ModuleBrowser : widget::OpaqueWidget {
 
 // Implementations to resolve dependencies
 
+
+inline void FavoriteModelItem::onAction(const event::Action& e) {
+	if (isSet) favoriteModels.erase(model);
+	else favoriteModels.insert(model);
+
+	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
+	if (browser->favorites) browser->refresh();
+}
+
+
+inline void FavoriteItem::onAction(const event::Action& e) {
+	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+	browser->favorites ^= true;
+	browser->refresh();
+}
+
+inline void FavoriteItem::step() {
+	MenuItem::step();
+	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+	active = browser->favorites;
+}
 
 inline void BrandItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();

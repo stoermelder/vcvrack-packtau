@@ -32,10 +32,8 @@ namespace v06 {
 
 static const float itemMargin = 2.0;
 
-static std::set<Model*> sFavoriteModels;
 static std::string sAuthorFilter;
 static int sTagFilter = -1;
-
 
 
 bool isMatch(std::string s, std::string search) {
@@ -143,8 +141,8 @@ struct ModelItem : BrowserListItem {
 		addChild(favoriteButton);
 
 		// Set favorite button initial state
-		auto it = sFavoriteModels.find(model);
-		if (it != sFavoriteModels.end())
+		auto it = favoriteModels.find(model);
+		if (it != favoriteModels.end())
 			favoriteButton->quantity->setValue(1);
 		favoriteButton->model = model;
 
@@ -402,12 +400,12 @@ struct ModuleBrowser : OpaqueWidget {
 
 		if (!filterPage) {
 			// Favorites
-			if (!sFavoriteModels.empty()) {
+			if (!favoriteModels.empty()) {
 				SeparatorItem *item = new SeparatorItem();
 				item->setText("Favorites");
 				moduleList->addChild(item);
 			}
-			for (Model *model : sFavoriteModels) {
+			for (Model *model : favoriteModels) {
 				if (isModelFiltered(model) && isModelMatch(model, search)) {
 					ModelItem *item = new ModelItem();
 					item->setModel(model);
@@ -535,12 +533,12 @@ void FavoriteRadioButton::onAction(const event::Action &e) {
 	if (!model)
 		return;
 	if (quantity->getValue() > 0.f) {
-		sFavoriteModels.insert(model);
+		favoriteModels.insert(model);
 	}
 	else {
-		auto it = sFavoriteModels.find(model);
-		if (it != sFavoriteModels.end())
-			sFavoriteModels.erase(it);
+		auto it = favoriteModels.find(model);
+		if (it != favoriteModels.end())
+			favoriteModels.erase(it);
 	}
 
 	ModuleBrowser *moduleBrowser = getAncestorOfType<ModuleBrowser>();
@@ -605,43 +603,6 @@ void SearchModuleField::onSelectKey(const event::SelectKey &e) {
 	}
 }
 
-// Global functions
-
-
-json_t *appModuleBrowserToJson() {
-	json_t *rootJ = json_object();
-
-	json_t *favoritesJ = json_array();
-	for (Model *model : sFavoriteModels) {
-		json_t *modelJ = json_object();
-		json_object_set_new(modelJ, "plugin", json_string(model->plugin->slug.c_str()));
-		json_object_set_new(modelJ, "model", json_string(model->slug.c_str()));
-		json_array_append_new(favoritesJ, modelJ);
-	}
-	json_object_set_new(rootJ, "favorites", favoritesJ);
-
-	return rootJ;
-}
-
-void appModuleBrowserFromJson(json_t *rootJ) {
-	json_t *favoritesJ = json_object_get(rootJ, "favorites");
-	if (favoritesJ) {
-		size_t i;
-		json_t *favoriteJ;
-		json_array_foreach(favoritesJ, i, favoriteJ) {
-			json_t *pluginJ = json_object_get(favoriteJ, "plugin");
-			json_t *modelJ = json_object_get(favoriteJ, "model");
-			if (!pluginJ || !modelJ)
-				continue;
-			std::string pluginSlug = json_string_value(pluginJ);
-			std::string modelSlug = json_string_value(modelJ);
-			Model *model = plugin::getModel(pluginSlug, modelSlug);
-			if (!model)
-				continue;
-			sFavoriteModels.insert(model);
-		}
-	}
-}
 
 } // namespace v06
 } // namespace Mb

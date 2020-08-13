@@ -8,11 +8,12 @@ namespace Mb {
 
 BrowserOverlay::BrowserOverlay() {
 	v1::modelBoxZoom = pluginSettings.mbV1zoom;
+	moduleBrowserFromJson(pluginSettings.mbModelsJ);
+
 	mbWidgetBackup = APP->scene->moduleBrowser;
 	mbWidgetBackup->hide();
 	APP->scene->removeChild(mbWidgetBackup);
 
-	v06::appModuleBrowserFromJson(pluginSettings.mbV06favouritesJ);
 	mbV06 = new v06::ModuleBrowser;
 	addChild(mbV06);
 
@@ -30,8 +31,9 @@ BrowserOverlay::~BrowserOverlay() {
 	APP->scene->removeChild(this);
 
 	pluginSettings.mbV1zoom = v1::modelBoxZoom;
-	json_decref(pluginSettings.mbV06favouritesJ);
-	pluginSettings.mbV06favouritesJ = v06::appModuleBrowserToJson();
+	json_decref(pluginSettings.mbModelsJ);
+	pluginSettings.mbModelsJ = moduleBrowserToJson();
+	
 	pluginSettings.saveToJson();
 }
 

@@ -5,12 +5,12 @@
 StoermelderSettings pluginSettings;
 
 StoermelderSettings::~StoermelderSettings() {
-    if (mbV06favouritesJ) json_decref(mbV06favouritesJ);
+    if (mbModelsJ) json_decref(mbModelsJ);
 }
 
 void StoermelderSettings::saveToJson() {
     json_t* settingsJ = json_object();
-    json_object_set(settingsJ, "mbV06favourites", mbV06favouritesJ);
+    json_object_set(settingsJ, "mbModels", mbModelsJ);
     json_object_set(settingsJ, "mbV1zoom", json_real(mbV1zoom));
 
     std::string settingsFilename = rack::asset::user("Stoermelder-PT.json");
@@ -39,7 +39,10 @@ void StoermelderSettings::readFromJson() {
         return;
     }
 
-    mbV06favouritesJ = json_copy(json_object_get(settingsJ, "mbV06favourites"));
+    json_t* fmJ = json_object_get(settingsJ, "mbV06favourites");
+    if (!fmJ) fmJ = json_object_get(settingsJ, "mbModels");
+    mbModelsJ = json_copy(fmJ);
+
     json_t* mbV1zoomJ = json_object_get(settingsJ, "mbV1zoom");
     mbV1zoom = json_real_value(mbV1zoomJ);
 
