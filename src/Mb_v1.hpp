@@ -58,7 +58,7 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 	return score;
 }
 
-static bool isModelVisible(plugin::Model* model, const std::string& search, const bool& favourite, const std::string& brand, int tagId) {
+static bool isModelVisible(plugin::Model* model, const std::string& search, const bool& favourite, const std::string& brand, int tagId, const bool& hidden) {
 	// Filter search query
 	if (search != "") {
 		float score = modelScore(model, search);
@@ -66,7 +66,7 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 			return false;
 	}
 
-	// Filter favourite
+	// Filter favorite
 	if (favourite) {
 		auto it = favoriteModels.find(model);
 		if (it == favoriteModels.end())
@@ -86,8 +86,20 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 			return false;
 	}
 
+	// Filter hidden
+	if (!hidden) {
+		auto it = hiddenModels.find(model);
+		if (it != hiddenModels.end())
+			return false;
+	}
+
 	return true;
 }
+
+static bool isModelHidden(plugin::Model* model) {
+	return hiddenModels.find(model) != hiddenModels.end();
+}
+
 
 static ModuleWidget* chooseModel(plugin::Model* model) {
 	// Create module
@@ -141,6 +153,25 @@ struct FavoriteModelItem : MenuItem {
 	}
 };
 
+struct HiddenModelItem : MenuItem {
+	plugin::Model* model;
+	bool isSet = false;
+
+	HiddenModelItem(plugin::Model* model) {
+		text = "Hidden";
+		this->model = model;
+		auto it = hiddenModels.find(model);
+		isSet = it != hiddenModels.end();
+	}
+
+	void onAction(const event::Action& e) override;
+
+	void step() override {
+		rightText = CHECKMARK(isSet);
+		MenuItem::step();
+	}
+};
+
 struct ModelBox : widget::OpaqueWidget {
 	plugin::Model* model;
 	widget::Widget* previewWidget;
@@ -150,6 +181,7 @@ struct ModelBox : widget::OpaqueWidget {
 	widget::ZoomWidget* zoomWidget = NULL;
 	float modelBoxZoom = -1.f;
 	float modelBoxWidth = -1.f;
+	bool modelHidden = false;
 
 	void setModel(plugin::Model* model) {
 		this->model = model;
@@ -230,6 +262,9 @@ struct ModelBox : widget::OpaqueWidget {
 		nvgFillPaint(args.vg, nvgBoxGradient(args.vg, 0, 0, box.size.x, box.size.y, c, r, shadowColor, transparentColor));
 		nvgFill(args.vg);
 
+		if (modelHidden) {
+			nvgGlobalAlpha(args.vg, 0.33);
+		}
 		OpaqueWidget::draw(args);
 	}
 
@@ -261,6 +296,7 @@ struct ModelBox : widget::OpaqueWidget {
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->plugin->name.c_str()));
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->name.c_str()));
 			menu->addChild(new FavoriteModelItem(model));
+			menu->addChild(new HiddenModelItem(model));
 			e.consume(this);
 		}
 	}
@@ -378,6 +414,7 @@ struct BrowserSearchField : ui::TextField {
 	}
 
 	void onShow(const event::Show& e) override {
+		text = string::trim(text);
 		selectAll();
 		TextField::onShow(e);
 	}
@@ -508,6 +545,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	bool favorites;
 	std::string brand;
 	int tagId = -1;
+	bool hidden;
 
 	ModuleBrowser() {
 		sidebar = new BrowserSidebar;
@@ -576,7 +614,8 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : modelContainer->children) {
 			ModelBox* m = dynamic_cast<ModelBox*>(w);
 			assert(m);
-			m->visible = isModelVisible(m->model, search, favorites, brand, tagId);
+			m->visible = isModelVisible(m->model, search, favorites, brand, tagId, hidden);
+			if (hidden && m->visible) m->modelHidden = isModelHidden(m->model);
 		}
 
 		// Sort ModelBoxes
@@ -616,13 +655,13 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : modelContainer->children) {
 			ModelBox* m = dynamic_cast<ModelBox*>(w);
 			assert(m);
-			if (isModelVisible(m->model, search, favorites, "", -1))
+			if (isModelVisible(m->model, search, favorites, "", -1, hidden))
 				filteredModels.push_back(m->model);
 		}
 
 		auto hasModel = [&](const std::string & brand, int tagId) -> bool {
 			for (plugin::Model* model : filteredModels) {
-				if (isModelVisible(model, "", favorites, brand, tagId))
+				if (isModelVisible(model, "", favorites, brand, tagId, hidden))
 					return true;
 			}
 			return false;
@@ -664,6 +703,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		favorites = false;
 		brand = "";
 		tagId = -1;
+		hidden = false;
 		refresh();
 	}
 
@@ -692,9 +732,25 @@ struct ModuleBrowser : widget::OpaqueWidget {
 inline void FavoriteModelItem::onAction(const event::Action& e) {
 	if (isSet) favoriteModels.erase(model);
 	else favoriteModels.insert(model);
+	hiddenModels.erase(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
-	if (browser->favorites) browser->refresh();
+	if (browser->favorites) {
+		Vec offset = browser->modelScroll->offset;
+		browser->refresh();
+		browser->modelScroll->offset = offset;
+	} 
+}
+
+inline void HiddenModelItem::onAction(const event::Action& e) {
+	favoriteModels.erase(model);
+	if (isSet) hiddenModels.erase(model);
+	else hiddenModels.insert(model);
+
+	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
+	Vec offset = browser->modelScroll->offset;
+	browser->refresh();
+	browser->modelScroll->offset = offset;
 }
 
 
@@ -760,7 +816,10 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 			case GLFW_KEY_SPACE: {
 				if (string::trim(text) == "") {
 					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-					browser->favorites ^= true;
+					if ((e.mods & RACK_MOD_MASK) == GLFW_MOD_CONTROL)
+						browser->hidden ^= true;
+					if ((e.mods & RACK_MOD_MASK) == 0)
+						browser->favorites ^= true;
 					e.consume(this);
 				}
 				break;
