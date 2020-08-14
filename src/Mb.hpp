@@ -39,6 +39,14 @@ struct BrowserOverlay : widget::OpaqueWidget {
 		if (visible) OpaqueWidget::step();
 	}
 
+	void draw(const DrawArgs& args) override {
+		nvgBeginPath(args.vg);
+		nvgRect(args.vg, RECT_ARGS(parent->box.zeroPos()));
+		nvgFillColor(args.vg, nvgRGBA(0x0, 0x0, 0x0, 0xB0));
+		nvgFill(args.vg);
+		OpaqueWidget::draw(args);
+	}
+
 	void onButton(const event::Button& e) override {
 		OpaqueWidget::onButton(e);
 		if (e.getTarget() != this)
