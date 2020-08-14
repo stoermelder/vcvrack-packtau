@@ -96,6 +96,10 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 	return true;
 }
 
+static void toggleModelFavorite(Model* model);
+
+static void toggleModelHidden(Model* model);
+
 static bool isModelHidden(plugin::Model* model) {
 	return hiddenModels.find(model) != hiddenModels.end();
 }
@@ -136,38 +140,42 @@ static float modelBoxZoom = 0.9f;
 
 struct FavoriteModelItem : MenuItem {
 	plugin::Model* model;
-	bool isSet = false;
+	bool isFavorite = false;
 
 	FavoriteModelItem(plugin::Model* model) {
 		text = "Favorite";
 		this->model = model;
 		auto it = favoriteModels.find(model);
-		isSet = it != favoriteModels.end();
+		isFavorite = it != favoriteModels.end();
 	}
 
-	void onAction(const event::Action& e) override;
+	void onAction(const event::Action& e) override {
+		toggleModelFavorite(model);
+	}
 
 	void step() override {
-		rightText = CHECKMARK(isSet);
+		rightText = string::f("%s %s", CHECKMARK(isFavorite), RACK_MOD_CTRL_NAME "+F");
 		MenuItem::step();
 	}
 };
 
 struct HiddenModelItem : MenuItem {
 	plugin::Model* model;
-	bool isSet = false;
+	bool isHidden = false;
 
 	HiddenModelItem(plugin::Model* model) {
 		text = "Hidden";
 		this->model = model;
 		auto it = hiddenModels.find(model);
-		isSet = it != hiddenModels.end();
+		isHidden = it != hiddenModels.end();
 	}
 
-	void onAction(const event::Action& e) override;
+	void onAction(const event::Action& e) override {
+		toggleModelHidden(model);
+	}
 
 	void step() override {
-		rightText = CHECKMARK(isSet);
+		rightText = string::f("%s %s", CHECKMARK(isHidden), RACK_MOD_CTRL_NAME "+H");
 		MenuItem::step();
 	}
 };
@@ -299,6 +307,22 @@ struct ModelBox : widget::OpaqueWidget {
 			menu->addChild(new HiddenModelItem(model));
 			e.consume(this);
 		}
+	}
+
+	void onHoverKey(const event::HoverKey& e) override {
+		if (e.action == GLFW_PRESS && (e.mods & RACK_MOD_MASK) == RACK_MOD_CTRL) {
+			switch (e.key) {
+				case GLFW_KEY_F:
+					toggleModelFavorite(model);
+					e.consume(this);
+					break;
+				case GLFW_KEY_H:
+					toggleModelHidden(model);
+					e.consume(this);
+					break;
+			}
+		}
+		OpaqueWidget::onHoverKey(e);
 	}
 
 	void onEnter(const event::Enter& e) override {
@@ -720,7 +744,6 @@ struct ModuleBrowser : widget::OpaqueWidget {
 			e.consume(this);
 			return;
 		}
-		
 		OpaqueWidget::onHoverScroll(e);
 	}
 };
@@ -728,10 +751,12 @@ struct ModuleBrowser : widget::OpaqueWidget {
 
 // Implementations to resolve dependencies
 
-
-inline void FavoriteModelItem::onAction(const event::Action& e) {
-	if (isSet) favoriteModels.erase(model);
-	else favoriteModels.insert(model);
+static void toggleModelFavorite(Model* model) {
+	auto it = favoriteModels.find(model);
+	if (it != favoriteModels.end()) 
+		favoriteModels.erase(model);
+	else 
+		favoriteModels.insert(model);
 	hiddenModels.erase(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
@@ -742,16 +767,19 @@ inline void FavoriteModelItem::onAction(const event::Action& e) {
 	} 
 }
 
-inline void HiddenModelItem::onAction(const event::Action& e) {
-	favoriteModels.erase(model);
-	if (isSet) hiddenModels.erase(model);
-	else hiddenModels.insert(model);
+static void toggleModelHidden(Model* model) {
+	auto it = hiddenModels.find(model);
+	if (it != hiddenModels.end()) 
+		hiddenModels.erase(model);
+	else 
+		hiddenModels.insert(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
 	Vec offset = browser->modelScroll->offset;
 	browser->refresh();
 	browser->modelScroll->offset = offset;
 }
+
 
 
 inline void FavoriteItem::onAction(const event::Action& e) {
@@ -827,8 +855,9 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 		}
 	}
 
-	if (!e.getTarget())
+	if ((e.mods & RACK_MOD_MASK) != RACK_MOD_CTRL && !e.getTarget()) {
 		ui::TextField::onSelectKey(e);
+	}
 }
 
 inline void BrowserSearchField::onChange(const event::Change& e) {
