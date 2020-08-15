@@ -86,6 +86,7 @@ json_t* moduleBrowserToJson() {
 void moduleBrowserFromJson(json_t* rootJ) {
 	json_t* favoritesJ = json_object_get(rootJ, "favorites");
 	if (favoritesJ) {
+		favoriteModels.clear();
 		size_t i;
 		json_t* slugJ;
 		json_array_foreach(favoritesJ, i, slugJ) {
@@ -104,6 +105,7 @@ void moduleBrowserFromJson(json_t* rootJ) {
 
 	json_t* hiddenJ = json_object_get(rootJ, "hidden");
 	if (hiddenJ) {
+		hiddenModels.clear();
 		size_t i;
 		json_t* slugJ;
 		json_array_foreach(hiddenJ, i, slugJ) {
