@@ -405,6 +405,31 @@ struct ModelZoomSlider : ui::Slider {
 	}
 };
 
+enum class SORT {
+	DEFAULT,
+	NAME
+};
+
+struct SortItem : ui::MenuItem {
+	SORT sort;
+	void onAction(const event::Action& e) override;
+	void step() override;
+
+	void draw(const DrawArgs& args) override {
+		BNDwidgetState state = BND_DEFAULT;
+
+		if (APP->event->hoveredWidget == this)
+			state = BND_HOVER;
+
+		if (active)
+			state = BND_ACTIVE;
+
+		bndMenuItem(args.vg, 0.0, 0.0, box.size.x, box.size.y, state, -1, NULL);
+		const float BND_LABEL_FONT_SIZE = 13.f;
+		NVGcolor color = bndTextColor(&bndGetTheme()->menuItemTheme, state);
+		bndIconLabelValue(args.vg, 0.f, 0.f, box.size.x, box.size.y, -1, color, BND_CENTER, BND_LABEL_FONT_SIZE, text.c_str(), NULL);
+	}
+};
 
 struct FavoriteItem : ui::MenuItem {
 	void onAction(const event::Action& e) override;
@@ -565,6 +590,8 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	BrowserSidebar* sidebar;
 	ui::ScrollWidget* modelScroll;
 	ui::Label* modelLabel;
+	SortItem* modelSortDefaultItem;
+	SortItem* modelSortNameItem;
 	ModelZoomSlider* modelZoomSlider;
 	ui::MarginLayout* modelMargin;
 	ui::SequentialLayout* modelContainer;
@@ -574,6 +601,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	std::string brand;
 	std::set<int> tagId;
 	bool hidden;
+	SORT sort = SORT::DEFAULT;
 
 	std::set<int> emptyTagId;
 
@@ -586,6 +614,18 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		// modelLabel->fontSize = 16;
 		// modelLabel->box.size.x = 400;
 		addChild(modelLabel);
+
+		modelSortDefaultItem = new SortItem;
+		modelSortDefaultItem->box.size.x = 140.f;
+		modelSortDefaultItem->sort = SORT::DEFAULT;
+		modelSortDefaultItem->text = "Recently updated";
+		addChild(modelSortDefaultItem);
+
+		modelSortNameItem = new SortItem;
+		modelSortNameItem->box.size.x = 140.f;
+		modelSortNameItem->sort = SORT::NAME;
+		modelSortNameItem->text = "Name";
+		addChild(modelSortNameItem);
 
 		modelZoomSlider = new ModelZoomSlider;
 		addChild(modelZoomSlider);
@@ -623,6 +663,9 @@ struct ModuleBrowser : widget::OpaqueWidget {
 
 		modelZoomSlider->box.pos = Vec(box.size.x - modelZoomSlider->box.size.x - 5, 5);
 
+		modelSortDefaultItem->box.pos = Vec(modelZoomSlider->box.pos.x - modelSortDefaultItem->box.size.x - 30, 5);
+		modelSortNameItem->box.pos = Vec(modelSortDefaultItem->box.pos.x - modelSortNameItem->box.size.x - 5, 5);
+
 		modelScroll->box.pos = sidebar->box.getTopRight().plus(math::Vec(0, 30));
 		modelScroll->box.size = box.size.minus(modelScroll->box.pos);
 		modelMargin->box.size.x = modelScroll->box.size.x;
@@ -649,19 +692,32 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		}
 
 		// Sort ModelBoxes
-		modelContainer->children.sort([&](Widget * w1, Widget * w2) {
+		auto sortDefault = [&](Widget* w1, Widget* w2) {
 			ModelBox* m1 = dynamic_cast<ModelBox*>(w1);
 			ModelBox* m2 = dynamic_cast<ModelBox*>(w2);
 			// Sort by (modifiedTimestamp descending, plugin brand)
 			auto t1 = std::make_tuple(-m1->model->plugin->modifiedTimestamp, m1->model->plugin->brand);
 			auto t2 = std::make_tuple(-m2->model->plugin->modifiedTimestamp, m2->model->plugin->brand);
 			return t1 < t2;
-		});
+		};
 
-		if (search.empty()) {
-			// We've already sorted above
+		auto sortByName = [&](Widget* w1, Widget* w2) {
+			ModelBox* m1 = dynamic_cast<ModelBox*>(w1);
+			ModelBox* m2 = dynamic_cast<ModelBox*>(w2);
+			return m1->model->name < m2->model->name;
+		};
+
+		switch (sort) {
+			case SORT::DEFAULT:
+				modelContainer->children.sort(sortDefault);
+				break;
+			case SORT::NAME:
+				modelContainer->children.sort(sortByName);
+				break;
 		}
-		else {
+		
+
+		if (!search.empty()) {
 			std::map<Widget*, float> scores;
 			// Compute scores
 			for (Widget* w : modelContainer->children) {
@@ -671,11 +727,6 @@ struct ModuleBrowser : widget::OpaqueWidget {
 					continue;
 				scores[m] = modelScore(m->model, search);
 			}
-			// // Sort by score
-			// modelContainer->children.sort([&](Widget *w1, Widget *w2) {
-			// 	// If score was not computed, scores[w] returns 0, but this doesn't matter because those widgets aren't visible.
-			// 	return get_default(scores, w1, 0.f) > get_default(scores, w2, 0.f);
-			// });
 		}
 
 		// Filter the brand and tag lists
@@ -793,6 +844,19 @@ inline void FilterBrandItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
 	browser->brand = brand;
 	browser->refresh();
+}
+
+inline void SortItem::onAction(const event::Action& e) {
+	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+	browser->sort = sort;
+	browser->refresh();
+}
+
+inline void SortItem::step() {
+	// Skip the autosizing of MenuItem
+	Widget::step();
+	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+	active = browser->sort == sort;
 }
 
 inline void FavoriteItem::onAction(const event::Action& e) {
