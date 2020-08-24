@@ -137,6 +137,10 @@ V get_default(const std::map<K, V>& m, const K& key, const V& def) {
 
 static float modelBoxZoom = 0.9f;
 
+struct FilterBrandItem : MenuItem {
+	std::string brand;
+	void onAction(const event::Action& e) override;
+};
 
 struct FavoriteModelItem : MenuItem {
 	plugin::Model* model;
@@ -148,11 +152,9 @@ struct FavoriteModelItem : MenuItem {
 		auto it = favoriteModels.find(model);
 		isFavorite = it != favoriteModels.end();
 	}
-
 	void onAction(const event::Action& e) override {
 		toggleModelFavorite(model);
 	}
-
 	void step() override {
 		rightText = string::f("%s %s", CHECKMARK(isFavorite), RACK_MOD_CTRL_NAME "+F");
 		MenuItem::step();
@@ -169,11 +171,9 @@ struct HiddenModelItem : MenuItem {
 		auto it = hiddenModels.find(model);
 		isHidden = it != hiddenModels.end();
 	}
-
 	void onAction(const event::Action& e) override {
 		toggleModelHidden(model);
 	}
-
 	void step() override {
 		rightText = string::f("%s %s", CHECKMARK(isHidden), RACK_MOD_CTRL_NAME "+H");
 		MenuItem::step();
@@ -303,6 +303,8 @@ struct ModelBox : widget::OpaqueWidget {
 			Menu* menu = createMenu();
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->plugin->name.c_str()));
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->name.c_str()));
+			menu->addChild(construct<FilterBrandItem>(&MenuItem::text, string::f("Filter by \"%s\"", model->plugin->brand.c_str()), &FilterBrandItem::brand, model->plugin->brand));
+			menu->addChild(new MenuSeparator);
 			menu->addChild(new FavoriteModelItem(model));
 			menu->addChild(new HiddenModelItem(model));
 			e.consume(this);
@@ -781,6 +783,11 @@ static void toggleModelHidden(Model* model) {
 }
 
 
+inline void FilterBrandItem::onAction(const event::Action& e) {
+	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
+	browser->brand = brand;
+	browser->refresh();
+}
 
 inline void FavoriteItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
