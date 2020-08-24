@@ -58,7 +58,7 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 	return score;
 }
 
-static bool isModelVisible(plugin::Model* model, const std::string& search, const bool& favourite, const std::string& brand, int tagId, const bool& hidden) {
+static bool isModelVisible(plugin::Model* model, const std::string& search, const bool& favourite, const std::string& brand, const std::set<int>& tagId, const bool& hidden) {
 	// Filter search query
 	if (search != "") {
 		float score = modelScore(model, search);
@@ -80,10 +80,12 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 	}
 
 	// Filter tag
-	if (tagId >= 0) {
-		auto it = std::find(model->tags.begin(), model->tags.end(), tagId);
-		if (it == model->tags.end())
-			return false;
+	if (tagId.size() > 0) {
+			for (auto t : tagId) {
+			auto it = std::find(model->tags.begin(), model->tags.end(), t);
+			if (it == model->tags.end())
+				return false;
+		}
 	}
 
 	// Filter hidden
@@ -570,8 +572,10 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	std::string search;
 	bool favorites;
 	std::string brand;
-	int tagId = -1;
+	std::set<int> tagId;
 	bool hidden;
+
+	std::set<int> emptyTagId;
 
 	ModuleBrowser() {
 		sidebar = new BrowserSidebar;
@@ -681,13 +685,15 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : modelContainer->children) {
 			ModelBox* m = dynamic_cast<ModelBox*>(w);
 			assert(m);
-			if (isModelVisible(m->model, search, favorites, "", -1, hidden))
+			if (isModelVisible(m->model, search, favorites, "", emptyTagId, hidden))
 				filteredModels.push_back(m->model);
 		}
 
-		auto hasModel = [&](const std::string & brand, int tagId) -> bool {
+		auto hasModel = [&](const std::string& brand, int itemTagId = -1) -> bool {
+			std::set<int> tagIdp1 = tagId;
+			if (itemTagId >= 0) tagIdp1.insert(itemTagId);
 			for (plugin::Model* model : filteredModels) {
-				if (isModelVisible(model, "", favorites, brand, tagId, hidden))
+				if (isModelVisible(model, "", favorites, brand, tagIdp1, hidden))
 					return true;
 			}
 			return false;
@@ -698,7 +704,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		for (Widget* w : sidebar->brandList->children) {
 			BrandItem* item = dynamic_cast<BrandItem*>(w);
 			assert(item);
-			item->disabled = !hasModel(item->text, tagId);
+			item->disabled = !hasModel(item->text);
 			if (!item->disabled)
 				brandsLen++;
 		}
@@ -720,7 +726,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 			if (w->visible)
 				modelsLen++;
 		}
-		modelLabel->text = string::f("Modules (%d) Click and drag a module to place it in the rack.", modelsLen);
+		modelLabel->text = string::f("Modules (%d)", modelsLen);
 	}
 
 	void clear() {
@@ -728,7 +734,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		sidebar->searchField->setText("");
 		favorites = false;
 		brand = "";
-		tagId = -1;
+		tagId.clear();
 		hidden = false;
 		refresh();
 	}
@@ -818,17 +824,17 @@ inline void BrandItem::step() {
 
 inline void TagItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-	if (browser->tagId == tagId)
-		browser->tagId = -1;
+	if (browser->tagId.find(tagId) != browser->tagId.end())
+		browser->tagId.erase(tagId);
 	else
-		browser->tagId = tagId;
+		browser->tagId.insert(tagId);
 	browser->refresh();
 }
 
 inline void TagItem::step() {
 	MenuItem::step();
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-	active = (browser->tagId == tagId);
+	active = (browser->tagId.find(tagId) != browser->tagId.end());
 }
 
 inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
