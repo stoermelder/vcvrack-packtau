@@ -169,7 +169,7 @@ struct HiddenModelItem : MenuItem {
 	bool isHidden = false;
 
 	HiddenModelItem(plugin::Model* model) {
-		text = "Hidden";
+		text = "Hide";
 		this->model = model;
 		auto it = hiddenModels.find(model);
 		isHidden = it != hiddenModels.end();
@@ -707,9 +707,11 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		Widget::draw(args);
 	}
 
-	void refresh() {
-		// Reset scroll position
-		modelScroll->offset = math::Vec();
+	void refresh(bool resetScroll) {
+		if (resetScroll) {
+			// Reset scroll position
+			modelScroll->offset = math::Vec();
+		}
 
 		// Filter ModelBoxes
 		for (Widget* w : modelContainer->children) {
@@ -815,11 +817,11 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		brand = "";
 		tagId.clear();
 		hidden = false;
-		refresh();
+		refresh(true);
 	}
 
 	void onShow(const event::Show& e) override {
-		refresh();
+		refresh(false);
 		OpaqueWidget::onShow(e);
 	}
 
@@ -848,9 +850,7 @@ static void toggleModelFavorite(Model* model) {
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
 	if (browser->favorites) {
-		Vec offset = browser->modelScroll->offset;
-		browser->refresh();
-		browser->modelScroll->offset = offset;
+		browser->refresh(false);
 	} 
 }
 
@@ -862,22 +862,20 @@ static void toggleModelHidden(Model* model) {
 		hiddenModels.insert(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
-	Vec offset = browser->modelScroll->offset;
-	browser->refresh();
-	browser->modelScroll->offset = offset;
+	browser->refresh(false);
 }
 
 
 inline void FilterBrandItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
 	browser->brand = brand;
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void SortItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 	browser->sort = sort;
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void SortItem::step() {
@@ -890,7 +888,7 @@ inline void SortItem::step() {
 inline void FavoriteItem::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 	browser->favorites ^= true;
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void FavoriteItem::step() {
@@ -905,7 +903,7 @@ inline void BrandItem::onAction(const event::Action& e) {
 		browser->brand = "";
 	else
 		browser->brand = text;
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void BrandItem::step() {
@@ -920,7 +918,7 @@ inline void TagItem::onAction(const event::Action& e) {
 		browser->tagId.erase(tagId);
 	else
 		browser->tagId.insert(tagId);
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void TagItem::step() {
@@ -968,7 +966,7 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 inline void BrowserSearchField::onChange(const event::Change& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 	browser->search = string::trim(text);
-	browser->refresh();
+	browser->refresh(true);
 }
 
 inline void BrowserSearchField::onAction(const event::Action& e) {
