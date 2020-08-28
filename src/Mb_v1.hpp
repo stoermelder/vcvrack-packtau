@@ -23,6 +23,7 @@
 #include <history.hpp>
 #include <settings.hpp>
 #include <tag.hpp>
+#include <thread>
 
 #include <set>
 #include <algorithm>
@@ -302,11 +303,38 @@ struct ModelBox : widget::OpaqueWidget {
 		}
 
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
+			struct ModuleUrlItem : ui::MenuItem {
+				std::string url;
+				void onAction(const event::Action& e) override {
+					std::thread t(system::openBrowser, url);
+					t.detach();
+				}
+			};
+
 			Menu* menu = createMenu();
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->plugin->name.c_str()));
 			menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->name.c_str()));
 			menu->addChild(construct<FilterBrandItem>(&MenuItem::text, string::f("Filter by \"%s\"", model->plugin->brand.c_str()), &FilterBrandItem::brand, model->plugin->brand));
 			menu->addChild(new MenuSeparator);
+
+			bool m = false;
+			if (!model->plugin->pluginUrl.empty()) {
+				ModuleUrlItem* websiteItem = new ModuleUrlItem;
+				websiteItem->text = "Website";
+				websiteItem->url = model->plugin->pluginUrl;
+				menu->addChild(websiteItem);
+				m = true;
+			}
+
+			if (!model->plugin->manualUrl.empty()) {
+				ModuleUrlItem* manualItem = new ModuleUrlItem;
+				manualItem->text = "Manual";
+				manualItem->url = model->plugin->manualUrl;
+				menu->addChild(manualItem);
+				m = true;
+			}
+
+			if (m) menu->addChild(new MenuSeparator);
 			menu->addChild(new FavoriteModelItem(model));
 			menu->addChild(new HiddenModelItem(model));
 			e.consume(this);
