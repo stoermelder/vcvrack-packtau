@@ -947,12 +947,15 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 				break;
 			} 
 			case GLFW_KEY_SPACE: {
-				if (string::trim(text) == "") {
+				if (string::trim(text) == "" && (e.mods & RACK_MOD_MASK) == 0) {
 					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-					if ((e.mods & RACK_MOD_MASK) == GLFW_MOD_CONTROL)
-						browser->hidden ^= true;
-					if ((e.mods & RACK_MOD_MASK) == 0)
-						browser->favorites ^= true;
+					browser->favorites ^= true;
+					e.consume(this);
+				}
+				if ((e.mods & RACK_MOD_MASK) == GLFW_MOD_CONTROL) {
+					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
+					browser->hidden ^= true;
+					setText(string::trim(text));
 					e.consume(this);
 				}
 				break;
