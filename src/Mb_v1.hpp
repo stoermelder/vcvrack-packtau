@@ -678,7 +678,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 			}
 		}
 
-		clear();
+		clear(false);
 	}
 
 	void step() override {
@@ -810,9 +810,11 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		modelLabel->text = string::f("Modules (%d)", modelsLen);
 	}
 
-	void clear() {
-		search = "";
-		sidebar->searchField->setText("");
+	void clear(bool keepSearch) {
+		if (!keepSearch) {
+			search = "";
+			sidebar->searchField->setText("");
+		}
 		favorites = false;
 		brand = "";
 		tagId.clear();
@@ -939,7 +941,7 @@ inline void BrowserSearchField::onSelectKey(const event::SelectKey& e) {
 			case GLFW_KEY_BACKSPACE: {
 				if (text == "") {
 					ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-					browser->clear();
+					browser->clear(false);
 					e.consume(this);
 				}
 				break;
@@ -987,7 +989,7 @@ inline void BrowserSearchField::onAction(const event::Action& e) {
 
 inline void ClearButton::onAction(const event::Action& e) {
 	ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-	browser->clear();
+	browser->clear((APP->window->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL);
 }
 
 } // namespace v1
