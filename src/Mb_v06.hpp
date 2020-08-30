@@ -181,6 +181,9 @@ struct ModelItem : BrowserListItem {
 		APP->scene->moduleBrowser->hide();
 		APP->event->setSelected(moduleWidget);
 
+		// Update usage data
+		modelUsageTouch(model);
+
 		// Move module nearest to the mouse position
 		//moduleWidget->box.pos = APP->scene->rack->mousePos.minus(moduleWidget->box.size.div(2));
 		//APP->scene->rack->requestModulePos(moduleWidget, moduleWidget->box.pos);

@@ -123,6 +123,9 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
 	// Hide Module Browser
 	APP->scene->moduleBrowser->hide();
 
+	// Update usage data
+	modelUsageTouch(model);
+
 	return moduleWidget;
 }
 
@@ -435,7 +438,9 @@ struct ModelZoomSlider : ui::Slider {
 
 enum class SORT {
 	DEFAULT,
-	NAME
+	NAME,
+	LAST_USED,
+	MOST_USED
 };
 
 struct SortItem : ui::MenuItem {
@@ -620,6 +625,8 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	ui::Label* modelLabel;
 	SortItem* modelSortDefaultItem;
 	SortItem* modelSortNameItem;
+	SortItem* modelSortLastUsedItem;
+	SortItem* modelSortMostUsedItem;
 	ModelZoomSlider* modelZoomSlider;
 	ui::MarginLayout* modelMargin;
 	ui::SequentialLayout* modelContainer;
@@ -644,15 +651,27 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		addChild(modelLabel);
 
 		modelSortDefaultItem = new SortItem;
-		modelSortDefaultItem->box.size.x = 140.f;
+		modelSortDefaultItem->box.size.x = 130.f;
 		modelSortDefaultItem->sort = SORT::DEFAULT;
 		modelSortDefaultItem->text = "Recently updated";
 		addChild(modelSortDefaultItem);
 
+		modelSortLastUsedItem = new SortItem;
+		modelSortLastUsedItem->box.size.x = 130.f;
+		modelSortLastUsedItem->sort = SORT::LAST_USED;
+		modelSortLastUsedItem->text = "Last used";
+		addChild(modelSortLastUsedItem);
+
+		modelSortMostUsedItem = new SortItem;
+		modelSortMostUsedItem->box.size.x = 130.f;
+		modelSortMostUsedItem->sort = SORT::MOST_USED;
+		modelSortMostUsedItem->text = "Most used";
+		addChild(modelSortMostUsedItem);
+
 		modelSortNameItem = new SortItem;
-		modelSortNameItem->box.size.x = 140.f;
+		modelSortNameItem->box.size.x = 130.f;
 		modelSortNameItem->sort = SORT::NAME;
-		modelSortNameItem->text = "Name";
+		modelSortNameItem->text = "Module name";
 		addChild(modelSortNameItem);
 
 		modelZoomSlider = new ModelZoomSlider;
@@ -692,7 +711,9 @@ struct ModuleBrowser : widget::OpaqueWidget {
 		modelZoomSlider->box.pos = Vec(box.size.x - modelZoomSlider->box.size.x - 5, 5);
 
 		modelSortDefaultItem->box.pos = Vec(modelZoomSlider->box.pos.x - modelSortDefaultItem->box.size.x - 30, 5);
-		modelSortNameItem->box.pos = Vec(modelSortDefaultItem->box.pos.x - modelSortNameItem->box.size.x - 5, 5);
+		modelSortLastUsedItem->box.pos = Vec(modelSortDefaultItem->box.pos.x - modelSortLastUsedItem->box.size.x - 5, 5);
+		modelSortMostUsedItem->box.pos = Vec(modelSortLastUsedItem->box.pos.x - modelSortMostUsedItem->box.size.x - 5, 5);
+		modelSortNameItem->box.pos = Vec(modelSortMostUsedItem->box.pos.x - modelSortNameItem->box.size.x - 5, 5);
 
 		modelScroll->box.pos = sidebar->box.getTopRight().plus(math::Vec(0, 30));
 		modelScroll->box.size = box.size.minus(modelScroll->box.pos);
@@ -737,12 +758,42 @@ struct ModuleBrowser : widget::OpaqueWidget {
 			return m1->model->name < m2->model->name;
 		};
 
+		auto sortByLastUsed = [&](Widget* w1, Widget* w2) {
+			ModelBox* m1 = dynamic_cast<ModelBox*>(w1);
+			ModelBox* m2 = dynamic_cast<ModelBox*>(w2);
+			auto u1 = modelUsage.find(m1->model);
+			auto u2 = modelUsage.find(m2->model);
+			// Sort by usedTimestamp descending
+			if (u1 == modelUsage.end()) return false;
+			if (u2 == modelUsage.end()) return true;
+			return -u1->second->usedTimestamp < -u2->second->usedTimestamp;
+		};
+
+		auto sortByMostUsed = [&](Widget* w1, Widget* w2) {
+			ModelBox* m1 = dynamic_cast<ModelBox*>(w1);
+			ModelBox* m2 = dynamic_cast<ModelBox*>(w2);
+			auto u1 = modelUsage.find(m1->model);
+			auto u2 = modelUsage.find(m2->model);
+			if (u1 == modelUsage.end()) return false;
+			if (u2 == modelUsage.end()) return true;
+			// Sort by (usedCount descending, modifiedTimestamp descending)
+			auto t1 = std::make_tuple(-u1->second->usedCount, -m1->model->plugin->modifiedTimestamp);
+			auto t2 = std::make_tuple(-u2->second->usedCount, -m2->model->plugin->modifiedTimestamp);
+			return t1 < t2;
+		};
+
 		switch (sort) {
 			case SORT::DEFAULT:
 				modelContainer->children.sort(sortDefault);
 				break;
 			case SORT::NAME:
 				modelContainer->children.sort(sortByName);
+				break;
+			case SORT::LAST_USED:
+				modelContainer->children.sort(sortByLastUsed);
+				break;
+			case SORT::MOST_USED:
+				modelContainer->children.sort(sortByMostUsed);
 				break;
 		}
 		

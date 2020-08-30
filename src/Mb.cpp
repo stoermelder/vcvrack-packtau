@@ -3,8 +3,137 @@
 #include "Mb_v1.hpp"
 #include "Mb_v06.hpp"
 #include <osdialog.h>
+#include <chrono>
 
 namespace Mb {
+
+// JSON storage
+
+json_t* moduleBrowserToJson(bool includeUsageData) {
+	json_t* rootJ = json_object();
+
+	json_t* favoritesJ = json_array();
+	for (Model* model : favoriteModels) {
+		json_t* slugJ = json_object();
+		json_object_set_new(slugJ, "plugin", json_string(model->plugin->slug.c_str()));
+		json_object_set_new(slugJ, "model", json_string(model->slug.c_str()));
+		json_array_append_new(favoritesJ, slugJ);
+	}
+	json_object_set_new(rootJ, "favorites", favoritesJ);
+
+	json_t* hiddenJ = json_array();
+	for (Model* model : hiddenModels) {
+		json_t* slugJ = json_object();
+		json_object_set_new(slugJ, "plugin", json_string(model->plugin->slug.c_str()));
+		json_object_set_new(slugJ, "model", json_string(model->slug.c_str()));
+		json_array_append_new(hiddenJ, slugJ);
+	}
+	json_object_set_new(rootJ, "hidden", hiddenJ);
+
+	if (includeUsageData) {
+		json_t* usageJ = json_array();
+		for (auto t : modelUsage) {
+			json_t* slugJ = json_object();
+			json_object_set_new(slugJ, "plugin", json_string(t.first->plugin->slug.c_str()));
+			json_object_set_new(slugJ, "model", json_string(t.first->slug.c_str()));
+			json_object_set_new(slugJ, "usedCount", json_integer(t.second->usedCount));
+			json_object_set_new(slugJ, "usedTimestamp", json_integer(t.second->usedTimestamp));
+			json_array_append_new(usageJ, slugJ);
+		}
+		json_object_set_new(rootJ, "usage", usageJ);
+	}
+
+	return rootJ;
+}
+
+void moduleBrowserFromJson(json_t* rootJ) {
+	json_t* favoritesJ = json_object_get(rootJ, "favorites");
+	if (favoritesJ) {
+		favoriteModels.clear();
+		size_t i;
+		json_t* slugJ;
+		json_array_foreach(favoritesJ, i, slugJ) {
+			json_t* pluginJ = json_object_get(slugJ, "plugin");
+			json_t* modelJ = json_object_get(slugJ, "model");
+			if (!pluginJ || !modelJ)
+				continue;
+			std::string pluginSlug = json_string_value(pluginJ);
+			std::string modelSlug = json_string_value(modelJ);
+			Model* model = plugin::getModel(pluginSlug, modelSlug);
+			if (!model)
+				continue;
+			favoriteModels.insert(model);
+		}
+	}
+
+	json_t* hiddenJ = json_object_get(rootJ, "hidden");
+	if (hiddenJ) {
+		hiddenModels.clear();
+		size_t i;
+		json_t* slugJ;
+		json_array_foreach(hiddenJ, i, slugJ) {
+			json_t* pluginJ = json_object_get(slugJ, "plugin");
+			json_t* modelJ = json_object_get(slugJ, "model");
+			if (!pluginJ || !modelJ)
+				continue;
+			std::string pluginSlug = json_string_value(pluginJ);
+			std::string modelSlug = json_string_value(modelJ);
+			Model* model = plugin::getModel(pluginSlug, modelSlug);
+			if (!model)
+				continue;
+			hiddenModels.insert(model);
+		}
+	}
+
+	json_t* usageJ = json_object_get(rootJ, "usage");
+	if (usageJ) {
+		for (auto t : modelUsage) {
+			delete t.second;
+		}
+		modelUsage.clear();
+		size_t i;
+		json_t* slugJ;
+		json_array_foreach(usageJ, i, slugJ) {
+			json_t* pluginJ = json_object_get(slugJ, "plugin");
+			json_t* modelJ = json_object_get(slugJ, "model");
+			if (!pluginJ || !modelJ)
+				continue;
+			std::string pluginSlug = json_string_value(pluginJ);
+			std::string modelSlug = json_string_value(modelJ);
+			Model* model = plugin::getModel(pluginSlug, modelSlug);
+			if (!model)
+				continue;
+
+			ModelUsage* m = new ModelUsage;
+			m->usedCount = json_integer_value(json_object_get(slugJ, "usedCount"));
+			m->usedTimestamp = json_integer_value(json_object_get(slugJ, "usedTimestamp"));
+			modelUsage[model] = m;
+		}
+	}
+}
+
+
+// Usage data
+
+void modelUsageTouch(Model* model) {
+	ModelUsage* mu = modelUsage[model];
+	if (!mu) {
+		mu = new ModelUsage;
+		modelUsage[model] = mu;
+	}
+	mu->usedCount++;
+	mu->usedTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+void modelUsageReset() {
+	for (auto t : modelUsage) {
+		delete t.second;
+	}
+	modelUsage.clear();
+}
+
+
+// Browser overlay
 
 BrowserOverlay::BrowserOverlay() {
 	v1::modelBoxZoom = pluginSettings.mbV1zoom;
@@ -37,7 +166,44 @@ BrowserOverlay::~BrowserOverlay() {
 	pluginSettings.saveToJson();
 }
 
+void BrowserOverlay::step() {
+	switch (*mode) {
+		case MODE::V06:
+			if (visible) mbV06->show(); else mbV06->hide();
+			mbV1->hide();
+			break;
+		case MODE::V1:
+			mbV06->hide();
+			if (visible) mbV1->show(); else mbV1->hide();
+			break;
+	}
 
+	box = parent->box.zeroPos();
+	// Only step if visible, since there are potentially thousands of descendants that don't need to be stepped.
+	if (visible) OpaqueWidget::step();
+}
+
+void BrowserOverlay::draw(const DrawArgs& args) {
+	nvgBeginPath(args.vg);
+	nvgRect(args.vg, RECT_ARGS(parent->box.zeroPos()));
+	nvgFillColor(args.vg, nvgRGBA(0x0, 0x0, 0x0, 0xB0));
+	nvgFill(args.vg);
+	OpaqueWidget::draw(args);
+}
+
+void BrowserOverlay::onButton(const event::Button& e) {
+	OpaqueWidget::onButton(e);
+	if (e.getTarget() != this)
+		return;
+
+	if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+		hide();
+		e.consume(this);
+	}
+}
+
+
+// Module
 
 struct MbModule : Module {
 	enum ParamIds {
@@ -152,18 +318,26 @@ struct MbWidget : ModuleWidget {
 			}
 		};
 
+		struct ResetUsageDataItem : MenuItem {
+			void onAction(const event::Action& e) override {
+				modelUsageReset();
+			}
+		};
+
 		menu->addChild(new MenuSeparator());
 		menu->addChild(construct<ModeV06Item>(&MenuItem::text, "v0.6", &ModeV06Item::module, module));
 		menu->addChild(construct<ModeV1Item>(&MenuItem::text, "v1 mod", &ModeV1Item::module, module));
 		menu->addChild(new MenuSeparator());
-		menu->addChild(construct<ExportItem>(&MenuItem::text, "Export favorites/hidden", &ExportItem::mw, this));
-		menu->addChild(construct<ImportItem>(&MenuItem::text, "Import favorites/hidden", &ImportItem::mw, this));
+		menu->addChild(construct<ExportItem>(&MenuItem::text, "Export favorites & hidden", &ExportItem::mw, this));
+		menu->addChild(construct<ImportItem>(&MenuItem::text, "Import favorites & hidden", &ImportItem::mw, this));
+		menu->addChild(new MenuSeparator());
+		menu->addChild(construct<ResetUsageDataItem>(&MenuItem::text, "Reset usage data"));
 	}
 
 	void exportSettings(std::string filename) {
 		INFO("Saving settings %s", filename.c_str());
 
-		json_t* rootJ = moduleBrowserToJson();
+		json_t* rootJ = moduleBrowserToJson(false);
 
 		DEFER({
 			json_decref(rootJ);
