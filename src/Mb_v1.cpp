@@ -9,7 +9,8 @@ enum class ModuleBrowserSort {
 	DEFAULT = 0,
 	NAME = 1,
 	LAST_USED = 2,
-	MOST_USED = 3
+	MOST_USED = 3,
+	RANDOM = 4
 };
 
 float modelBoxZoom = 0.9f;
@@ -302,6 +303,8 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 
 	void createContextMenu() {
+		Menu* menu = createMenu();
+
 		struct FilterBrandItem : MenuItem {
 			std::string brand;
 			void onAction(const event::Action& e) override {
@@ -311,11 +314,11 @@ struct ModelBox : widget::OpaqueWidget {
 			}
 		};
 
-		Menu* menu = createMenu();
 		menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->plugin->name.c_str()));
 		menu->addChild(construct<MenuLabel>(&MenuLabel::text, model->name.c_str()));
 		menu->addChild(construct<FilterBrandItem>(&MenuItem::text, string::f("Filter by \"%s\"", model->plugin->brand.c_str()), &FilterBrandItem::brand, model->plugin->brand));
 		menu->addChild(new MenuSeparator);
+		bool m = false;
 
 		struct ModuleUrlItem : ui::MenuItem {
 			std::string url;
@@ -325,7 +328,6 @@ struct ModelBox : widget::OpaqueWidget {
 			}
 		};
 
-		bool m = false;
 		if (!model->plugin->pluginUrl.empty()) {
 			ModuleUrlItem* websiteItem = new ModuleUrlItem;
 			websiteItem->text = "Website";
@@ -710,28 +712,35 @@ ModuleBrowser::ModuleBrowser() {
 	addChild(modelLabel);
 
 	SortItem* modelSortDefaultItem = new SortItem;
-	modelSortDefaultItem->box.size.x = 130.f;
+	modelSortDefaultItem->box.size.x = 125.f;
 	modelSortDefaultItem->sort = ModuleBrowserSort::DEFAULT;
 	modelSortDefaultItem->text = "Recently updated";
 	addChild(modelSortDefaultItem);
 	this->modelSortDefaultItem = modelSortDefaultItem;
 
 	SortItem* modelSortLastUsedItem = new SortItem;
-	modelSortLastUsedItem->box.size.x = 130.f;
+	modelSortLastUsedItem->box.size.x = 125.f;
 	modelSortLastUsedItem->sort = ModuleBrowserSort::LAST_USED;
 	modelSortLastUsedItem->text = "Last used";
 	addChild(modelSortLastUsedItem);
 	this->modelSortLastUsedItem = modelSortLastUsedItem;
 
 	SortItem* modelSortMostUsedItem = new SortItem;
-	modelSortMostUsedItem->box.size.x = 130.f;
+	modelSortMostUsedItem->box.size.x = 125.f;
 	modelSortMostUsedItem->sort = ModuleBrowserSort::MOST_USED;
 	modelSortMostUsedItem->text = "Most used";
 	addChild(modelSortMostUsedItem);
 	this->modelSortMostUsedItem = modelSortMostUsedItem;
 
+	SortItem* modelSortRandom = new SortItem;
+	modelSortRandom->box.size.x = 125.f;
+	modelSortRandom->sort = ModuleBrowserSort::RANDOM;
+	modelSortRandom->text = "Random";
+	addChild(modelSortRandom);
+	this->modelSortRandom = modelSortRandom;
+
 	SortItem* modelSortNameItem = new SortItem;
-	modelSortNameItem->box.size.x = 130.f;
+	modelSortNameItem->box.size.x = 125.f;
 	modelSortNameItem->sort = ModuleBrowserSort::NAME;
 	modelSortNameItem->text = "Module name";
 	addChild(modelSortNameItem);
@@ -776,7 +785,8 @@ void ModuleBrowser::step() {
 	modelSortDefaultItem->box.pos = Vec(modelZoomSlider->box.pos.x - modelSortDefaultItem->box.size.x - 30, 5);
 	modelSortLastUsedItem->box.pos = Vec(modelSortDefaultItem->box.pos.x - modelSortLastUsedItem->box.size.x - 5, 5);
 	modelSortMostUsedItem->box.pos = Vec(modelSortLastUsedItem->box.pos.x - modelSortMostUsedItem->box.size.x - 5, 5);
-	modelSortNameItem->box.pos = Vec(modelSortMostUsedItem->box.pos.x - modelSortNameItem->box.size.x - 5, 5);
+	modelSortRandom->box.pos = Vec(modelSortMostUsedItem->box.pos.x - modelSortRandom->box.size.x - 5, 5);
+	modelSortNameItem->box.pos = Vec(modelSortRandom->box.pos.x - modelSortNameItem->box.size.x - 5, 5);
 
 	modelScroll->box.pos = sidebar->box.getTopRight().plus(math::Vec(0, 30));
 	modelScroll->box.size = box.size.minus(modelScroll->box.pos);
@@ -857,6 +867,12 @@ void ModuleBrowser::refresh(bool resetScroll) {
 			break;
 		case ModuleBrowserSort::MOST_USED:
 			modelContainer->children.sort(sortByMostUsed);
+			break;
+		case ModuleBrowserSort::RANDOM:
+			std::vector<std::reference_wrapper<Widget*>> vec(modelContainer->children.begin(), modelContainer->children.end());
+			std::random_shuffle(vec.begin(), vec.end());
+			std::list<Widget*> s(vec.begin(), vec.end());
+			modelContainer->children.swap(s);
 			break;
 	}
 	
