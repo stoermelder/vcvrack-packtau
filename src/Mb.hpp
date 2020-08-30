@@ -19,12 +19,12 @@ void modelUsageReset();
 json_t* moduleBrowserToJson(bool includeUsageData = true);
 void moduleBrowserFromJson(json_t* rootJ);
 
-static std::set<Model*> favoriteModels;
-static std::set<Model*> hiddenModels;
-static std::map<Model*, ModelUsage*> modelUsage;
+extern std::set<Model*> favoriteModels;
+extern std::set<Model*> hiddenModels;
+extern std::map<Model*, ModelUsage*> modelUsage;
 
 
-// Browser overlage
+// Browser overlay
 
 enum class MODE {
 	V06,

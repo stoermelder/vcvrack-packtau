@@ -7,6 +7,10 @@
 
 namespace Mb {
 
+std::set<Model*> favoriteModels;
+std::set<Model*> hiddenModels;
+std::map<Model*, ModelUsage*> modelUsage;
+
 // JSON storage
 
 json_t* moduleBrowserToJson(bool includeUsageData) {
