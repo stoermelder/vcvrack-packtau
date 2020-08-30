@@ -9,19 +9,11 @@ namespace v1 {
 #define PREVIEW_MAX 1.6f
 
 extern float modelBoxZoom;
-
+extern int modelBoxSort;
 
 struct ModelZoomSlider : ui::Slider { 
 	ModelZoomSlider();
 	~ModelZoomSlider();
-};
-
-
-enum class ModuleBrowserSort {
-	DEFAULT,
-	NAME,
-	LAST_USED,
-	MOST_USED
 };
 
 struct BrowserSidebar : widget::Widget {
@@ -56,7 +48,6 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	std::string brand;
 	std::set<int> tagId;
 	bool hidden;
-	ModuleBrowserSort sort = ModuleBrowserSort::DEFAULT;
 	std::set<int> emptyTagId;
 
 	ModuleBrowser();

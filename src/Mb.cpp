@@ -141,6 +141,7 @@ void modelUsageReset() {
 
 BrowserOverlay::BrowserOverlay() {
 	v1::modelBoxZoom = pluginSettings.mbV1zoom;
+	v1::modelBoxSort = pluginSettings.mbV1sort;
 	moduleBrowserFromJson(pluginSettings.mbModelsJ);
 
 	mbWidgetBackup = APP->scene->moduleBrowser;
@@ -164,6 +165,7 @@ BrowserOverlay::~BrowserOverlay() {
 	APP->scene->removeChild(this);
 
 	pluginSettings.mbV1zoom = v1::modelBoxZoom;
+	pluginSettings.mbV1sort = v1::modelBoxSort;
 	json_decref(pluginSettings.mbModelsJ);
 	pluginSettings.mbModelsJ = moduleBrowserToJson();
 	

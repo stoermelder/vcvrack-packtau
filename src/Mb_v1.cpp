@@ -5,7 +5,15 @@
 namespace Mb {
 namespace v1 {
 
+enum class ModuleBrowserSort {
+	DEFAULT = 0,
+	NAME = 1,
+	LAST_USED = 2,
+	MOST_USED = 3
+};
+
 float modelBoxZoom = 0.9f;
+int modelBoxSort = (int)ModuleBrowserSort::DEFAULT;
 
 
 // Static functions
@@ -431,15 +439,14 @@ struct SortItem : ui::MenuItem {
 
 	void onAction(const event::Action& e) override {
 		ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-		browser->sort = sort;
+		modelBoxSort = (int)sort;
 		browser->refresh(true);
 	}
 
 	void step() override {
 		// Skip the autosizing of MenuItem
 		Widget::step();
-		ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
-		active = browser->sort == sort;
+		active = modelBoxSort == (int)sort;
 	}
 
 	void draw(const DrawArgs& args) override {
@@ -838,7 +845,7 @@ void ModuleBrowser::refresh(bool resetScroll) {
 		return t1 < t2;
 	};
 
-	switch (sort) {
+	switch ((ModuleBrowserSort)modelBoxSort) {
 		case ModuleBrowserSort::DEFAULT:
 			modelContainer->children.sort(sortDefault);
 			break;
