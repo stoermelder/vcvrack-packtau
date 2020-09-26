@@ -558,7 +558,11 @@ struct BrowserSearchField : ui::TextField {
 			}
 		}
 
-		if ((e.mods & RACK_MOD_MASK) != RACK_MOD_CTRL && !e.getTarget()) {
+		bool propagate = !e.getTarget();
+		propagate = propagate && !((e.mods & RACK_MOD_MASK) == RACK_MOD_CTRL && e.key == GLFW_KEY_F);
+		propagate = propagate && !((e.mods & RACK_MOD_MASK) == RACK_MOD_CTRL && e.key == GLFW_KEY_H);
+
+		if (propagate) {
 			ui::TextField::onSelectKey(e);
 		}
 	}
