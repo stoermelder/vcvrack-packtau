@@ -33,7 +33,8 @@
 			"slug": "Mb",
 			"name": "MB",
 			"description": "Custom module browsers for Rack. Brings back the browser from v0.6x and has a modified version from v1.x with adjustable preview size.",
-			"tags": ["Utility"]
+			"tags": ["Utility"],
+			"disabled": true
 		},
 		{
 			"slug": "Mx",
