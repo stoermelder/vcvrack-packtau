@@ -1,5 +1,5 @@
 #include "MenuBarEx.hpp"
-#include "Mb.hpp"
+#include "mb/Mb.hpp"
 #include <thread>
 
 namespace MenuBarEx {
