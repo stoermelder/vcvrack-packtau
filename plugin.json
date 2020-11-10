@@ -30,13 +30,6 @@
 			"tags": ["Utility"]
 		},
 		{
-			"slug": "Mb",
-			"name": "MB",
-			"description": "Custom module browsers for Rack. Brings back the browser from v0.6x and has a modified version from v1.x with adjustable preview size.",
-			"tags": ["Utility"],
-			"disabled": true
-		},
-		{
 			"slug": "Mx",
 			"name": "MX",
 			"description": "Module for controlling the mouse pointer and mouse clicks by CV, useful for MIDI-controllers.",

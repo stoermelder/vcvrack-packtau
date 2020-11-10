@@ -27,16 +27,15 @@ extern std::map<Model*, ModelUsage*> modelUsage;
 // Browser overlay
 
 enum class MODE {
-	V06,
-	V1
+	DEFAULT = -1,
+	V06 = 0,
+	V1 = 1
 };
 
 struct BrowserOverlay : widget::OpaqueWidget {
 	Widget* mbWidgetBackup;
 	Widget* mbV06;
 	Widget* mbV1;
-
-	MODE* mode;
 
 	BrowserOverlay();
 	~BrowserOverlay();
@@ -45,5 +44,10 @@ struct BrowserOverlay : widget::OpaqueWidget {
 	void draw(const DrawArgs& args) override;
 	void onButton(const event::Button& e) override;
 };
+
+
+void exportSettingsDialog();
+void importSettingsDialog();
+void init();
 
 } // namespace Mb

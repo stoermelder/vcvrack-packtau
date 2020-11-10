@@ -10,6 +10,7 @@ StoermelderSettings::~StoermelderSettings() {
 
 void StoermelderSettings::saveToJson() {
     json_t* settingsJ = json_object();
+    json_object_set(settingsJ, "mbMode", json_integer(mbMode));
     json_object_set(settingsJ, "mbModels", mbModelsJ);
     json_object_set(settingsJ, "mbV1zoom", json_real(mbV1zoom));
     json_object_set(settingsJ, "mbV1sort", json_integer(mbV1sort));
@@ -40,10 +41,11 @@ void StoermelderSettings::readFromJson() {
         return;
     }
 
+    json_t* mbModeJ = json_object_get(settingsJ, "mbMode");
+    mbMode = json_integer_value(mbModeJ);
     json_t* fmJ = json_object_get(settingsJ, "mbV06favourites");
     if (!fmJ) fmJ = json_object_get(settingsJ, "mbModels");
     mbModelsJ = json_copy(fmJ);
-
     json_t* mbV1zoomJ = json_object_get(settingsJ, "mbV1zoom");
     mbV1zoom = json_real_value(mbV1zoomJ);
     json_t* mbV1sortJ = json_object_get(settingsJ, "mbV1sort");

@@ -11,7 +11,6 @@ extern Model* modelT7Ctrl;
 extern Model* modelT7Midi;
 extern Model* modelT7Assistant;
 
-extern Model* modelMb;
 extern Model* modelMx;
 extern Model* modelPm;
 

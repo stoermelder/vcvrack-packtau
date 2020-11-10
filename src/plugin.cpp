@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "MenuBarEx.hpp"
 
 Plugin* pluginInstance;
 
@@ -9,11 +10,12 @@ void init(rack::Plugin* p) {
 	p->addModel(modelT7Midi);
 	p->addModel(modelT7Assistant);
 
-	p->addModel(modelMb);
 	p->addModel(modelMx);
 	p->addModel(modelPm);
 
 	pluginSettings.readFromJson();
+
+	MenuBarEx::init();
 }
 
 
