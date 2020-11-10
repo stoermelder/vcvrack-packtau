@@ -40,6 +40,12 @@
 			"name": "PM",
 			"description": "Provides a context menu on cable-ports",
 			"tags": ["Utility"]
+		},
+		{
+			"slug": "Exit",
+			"name": "EXIT",
+			"description": "",
+			"tags": ["Utility"]
 		}
 	]
 }
