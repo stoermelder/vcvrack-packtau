@@ -31,7 +31,7 @@ struct ExitModule : Module {
 		std::string workPath;
 		int workToDo = 0;
 
-		bool step() override {
+		void step() override {
 			if (workToDo != 0) {
 				if (workToDo == 2) {
 					APP->patch->save(APP->patch->path);
@@ -39,10 +39,7 @@ struct ExitModule : Module {
 				APP->patch->load(workPath);
 				APP->patch->path = workPath;
 				APP->history->setSaved();
-				workToDo = 0;
-				return true;
 			}
-			return false;
 		}
 
 		void trigger(std::string workPath, int workToDo) {
@@ -57,6 +54,10 @@ struct ExitModule : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		sync = new ExitSync;
 		UiSync::registerHandle(sync);
+	}
+
+	~ExitModule() {
+		UiSync::unregisterHandle(sync);
 	}
 
 	void process(const ProcessArgs &args) override {
