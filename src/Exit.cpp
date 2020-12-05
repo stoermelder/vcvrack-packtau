@@ -83,10 +83,10 @@ struct ExitModule : Module {
 		if (inputs[INPUT_LOAD].isConnected() && loadTrigger.process(inputs[INPUT_LOAD].getVoltage())) {
 			sync->trigger(WORK::LOAD, path);
 		}
-		if (inputs[INPUT_LOADSAVE].isConnected() && loadTrigger.process(inputs[INPUT_LOADSAVE].getVoltage())) {
+		if (inputs[INPUT_LOADSAVE].isConnected() && loadSaveTrigger.process(inputs[INPUT_LOADSAVE].getVoltage())) {
 			sync->trigger(WORK::LOADSAVE, path);
 		}
-		if (inputs[INPUT_QUIT].isConnected() && loadTrigger.process(inputs[INPUT_QUIT].getVoltage())) {
+		if (inputs[INPUT_QUIT].isConnected() && quitTrigger.process(inputs[INPUT_QUIT].getVoltage())) {
 			sync->trigger(WORK::QUIT);
 		}
 	}
