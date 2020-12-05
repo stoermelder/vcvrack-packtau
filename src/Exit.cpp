@@ -11,8 +11,9 @@ struct ExitModule : Module {
 		NUM_PARAMS
 	};
 	enum InputIds {
-		TRIG_INPUT,
-		TRIGS_INPUT,
+		INPUT_LOAD,
+		INPUT_LOADSAVE,
+		INPUT_QUIT,
 		NUM_INPUTS
 	};
 	enum OutputIds {
@@ -24,25 +25,43 @@ struct ExitModule : Module {
 
 	std::string path;
 
-	dsp::SchmittTrigger trigTrigger;
-	dsp::SchmittTrigger trigsTrigger;
+	dsp::SchmittTrigger loadTrigger;
+	dsp::SchmittTrigger loadSaveTrigger;
+	dsp::SchmittTrigger quitTrigger;
+
+	enum class WORK {
+		NONE,
+		LOAD,
+		LOADSAVE,
+		QUIT
+	};
 
 	struct ExitSync : UiSync::UiSyncHandle {
 		std::string workPath;
-		int workToDo = 0;
+		WORK workToDo = WORK::NONE;
 
 		void step() override {
-			if (workToDo != 0) {
-				if (workToDo == 2) {
+			switch (workToDo) {
+				case WORK::NONE:
+					break;
+				case WORK::LOAD:
+					APP->patch->load(workPath);
+					APP->patch->path = workPath;
+					APP->history->setSaved();
+					break;
+				case WORK::LOADSAVE:
 					APP->patch->save(APP->patch->path);
-				}
-				APP->patch->load(workPath);
-				APP->patch->path = workPath;
-				APP->history->setSaved();
+					APP->patch->load(workPath);
+					APP->patch->path = workPath;
+					APP->history->setSaved();
+					break;
+				case WORK::QUIT:
+					APP->window->close();
+					break;
 			}
 		}
 
-		void trigger(std::string workPath, int workToDo) {
+		void trigger(WORK workToDo, std::string workPath = "") {
 			this->workPath = workPath;
 			this->workToDo = workToDo;
 		}
@@ -61,11 +80,14 @@ struct ExitModule : Module {
 	}
 
 	void process(const ProcessArgs &args) override {
-		if (inputs[TRIG_INPUT].isConnected() && trigTrigger.process(inputs[TRIG_INPUT].getVoltage())) {
-			sync->trigger(path, 1);
+		if (inputs[INPUT_LOAD].isConnected() && loadTrigger.process(inputs[INPUT_LOAD].getVoltage())) {
+			sync->trigger(WORK::LOAD, path);
 		}
-		if (inputs[TRIGS_INPUT].isConnected() && trigTrigger.process(inputs[TRIGS_INPUT].getVoltage())) {
-			sync->trigger(path, 2);
+		if (inputs[INPUT_LOADSAVE].isConnected() && loadTrigger.process(inputs[INPUT_LOADSAVE].getVoltage())) {
+			sync->trigger(WORK::LOADSAVE, path);
+		}
+		if (inputs[INPUT_QUIT].isConnected() && loadTrigger.process(inputs[INPUT_QUIT].getVoltage())) {
+			sync->trigger(WORK::QUIT);
 		}
 	}
 
@@ -94,8 +116,9 @@ struct ExitWidget : ModuleWidget {
 		this->module = module;
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Exit.svg")));
 
-		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 255.4f), module, ExitModule::TRIG_INPUT));
-		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 298.9f), module, ExitModule::TRIGS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 211.8f), module, ExitModule::INPUT_LOAD));
+		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 255.4f), module, ExitModule::INPUT_LOADSAVE));
+		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 298.9f), module, ExitModule::INPUT_QUIT));
 	}
 
 	void selectFileDialog() {
