@@ -1,6 +1,7 @@
 #include "MenuBarEx.hpp"
 #include "UiSync.hpp"
 #include "mb/Mb.hpp"
+#include "mb/Mb_v1.hpp"
 #include <thread>
 
 namespace MenuBarEx {
@@ -14,6 +15,16 @@ struct MbModeItem : MenuItem {
 	}
 	void step() override {
 		rightText = CHECKMARK(pluginSettings.mbMode == mode);
+		MenuItem::step();
+	}
+};
+
+struct MbHideBrandsItem : MenuItem {
+	void onAction(const event::Action& e) override {
+		Mb::v1::hideBrands ^= true;
+	}
+	void step() override {
+		rightText = Mb::v1::hideBrands ? "✔" : "";
 		MenuItem::step();
 	}
 };
@@ -63,6 +74,7 @@ struct MenuBarExButton : MenuButton {
 		menu->addChild(construct<MbModeItem>(&MenuItem::text, "Default", &MbModeItem::mode, -1));
 		menu->addChild(construct<MbModeItem>(&MenuItem::text, "Mode \"v0.6\"", &MbModeItem::mode, (int)Mb::MODE::V06));
 		menu->addChild(construct<MbModeItem>(&MenuItem::text, "Mode \"v1 mod\"", &MbModeItem::mode, (int)Mb::MODE::V1));
+		menu->addChild(construct<MbHideBrandsItem>(&MenuItem::text, "\"v1 mod\": Hide brand list"));
 		menu->addChild(construct<MbExportItem>(&MenuItem::text, "Export favorites & hidden"));
 		menu->addChild(construct<MbImportItem>(&MenuItem::text, "Import favorites & hidden"));
 		menu->addChild(construct<MbResetUsageDataItem>(&MenuItem::text, "Reset usage data"));

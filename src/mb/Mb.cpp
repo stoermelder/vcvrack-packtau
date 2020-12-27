@@ -236,6 +236,7 @@ void importSettingsDialog() {
 BrowserOverlay::BrowserOverlay() {
 	v1::modelBoxZoom = pluginSettings.mbV1zoom;
 	v1::modelBoxSort = pluginSettings.mbV1sort;
+	v1::hideBrands = pluginSettings.mbV1hideBrands;
 	moduleBrowserFromJson(pluginSettings.mbModelsJ);
 
 	mbWidgetBackup = APP->scene->moduleBrowser;
@@ -262,6 +263,7 @@ BrowserOverlay::~BrowserOverlay() {
 	
 	pluginSettings.mbV1zoom = v1::modelBoxZoom;
 	pluginSettings.mbV1sort = v1::modelBoxSort;
+	pluginSettings.mbV1hideBrands = v1::hideBrands;
 	json_decref(pluginSettings.mbModelsJ);
 	pluginSettings.mbModelsJ = moduleBrowserToJson();
 	
