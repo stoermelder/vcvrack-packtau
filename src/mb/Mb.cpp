@@ -237,6 +237,7 @@ BrowserOverlay::BrowserOverlay() {
 	v1::modelBoxZoom = pluginSettings.mbV1zoom;
 	v1::modelBoxSort = pluginSettings.mbV1sort;
 	v1::hideBrands = pluginSettings.mbV1hideBrands;
+	v1::searchDescriptions = pluginSettings.mbV1searchDescriptions;
 	moduleBrowserFromJson(pluginSettings.mbModelsJ);
 
 	mbWidgetBackup = APP->scene->moduleBrowser;
@@ -260,13 +261,14 @@ BrowserOverlay::~BrowserOverlay() {
 	if (parent) {
 		APP->scene->removeChild(this);
 	}
-	
+
 	pluginSettings.mbV1zoom = v1::modelBoxZoom;
 	pluginSettings.mbV1sort = v1::modelBoxSort;
 	pluginSettings.mbV1hideBrands = v1::hideBrands;
+	pluginSettings.mbV1searchDescriptions = v1::searchDescriptions;
 	json_decref(pluginSettings.mbModelsJ);
 	pluginSettings.mbModelsJ = moduleBrowserToJson();
-	
+
 	pluginSettings.saveToJson();
 }
 
