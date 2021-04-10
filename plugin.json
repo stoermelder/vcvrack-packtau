@@ -46,6 +46,12 @@
 			"name": "EXIT",
 			"description": "",
 			"tags": ["Utility"]
+		},
+		{
+			"slug": "Rf",
+			"name": "RF",
+			"description": "Module for Rack-folding",
+			"tags": ["Utility", "Expander"]
 		}
 	]
 }

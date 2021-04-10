@@ -13,6 +13,7 @@ extern Model* modelT7Assistant;
 
 extern Model* modelMx;
 extern Model* modelPm;
+extern Model* modelRf;
 extern Model* modelExit;
 
 
