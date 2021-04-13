@@ -3,7 +3,7 @@ RACK_DIR ?= ../..
 FLAGS += \
 	-Idep/include
 
-SOURCES += $(wildcard src/*.cpp) $(wildcard src/mb/*.cpp)
+SOURCES += $(wildcard src/*.cpp) $(wildcard src/mb/*.cpp) $(wildcard src/audio/*.cpp)
 
 # Add files to the ZIP package when running `make dist`
 # The compiled plugin is automatically added.
