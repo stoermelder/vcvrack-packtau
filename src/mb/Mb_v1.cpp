@@ -16,7 +16,7 @@ enum class ModuleBrowserSort {
 float modelBoxZoom = 0.9f;
 int modelBoxSort = (int)ModuleBrowserSort::DEFAULT;
 bool hideBrands = false;
-
+bool searchDescriptions = false;
 
 // Static functions
 
@@ -37,6 +37,10 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 			s += " ";
 			s += alias;
 		}
+	}
+	if(searchDescriptions){
+		s += " ";
+		s += model->description;
 	}
 	float score = string::fuzzyScore(string::lowercase(s), string::lowercase(search));
 	return score;
@@ -84,23 +88,23 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 
 static void toggleModelFavorite(Model* model) {
 	auto it = favoriteModels.find(model);
-	if (it != favoriteModels.end()) 
+	if (it != favoriteModels.end())
 		favoriteModels.erase(model);
-	else 
+	else
 		favoriteModels.insert(model);
 	hiddenModels.erase(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
 	if (browser->favorites) {
 		browser->refresh(false);
-	} 
+	}
 }
 
 static void toggleModelHidden(Model* model) {
 	auto it = hiddenModels.find(model);
-	if (it != hiddenModels.end()) 
+	if (it != hiddenModels.end())
 		hiddenModels.erase(model);
-	else 
+	else
 		hiddenModels.insert(model);
 
 	ModuleBrowser* browser = APP->scene->getFirstDescendantOfType<ModuleBrowser>();
@@ -547,7 +551,7 @@ struct BrowserSearchField : ui::TextField {
 					overlay->hide();
 					e.consume(this);
 					break;
-				} 
+				}
 				case GLFW_KEY_BACKSPACE: {
 					if (text == "") {
 						ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
@@ -555,7 +559,7 @@ struct BrowserSearchField : ui::TextField {
 						e.consume(this);
 					}
 					break;
-				} 
+				}
 				case GLFW_KEY_SPACE: {
 					if (string::trim(text) == "" && (e.mods & RACK_MOD_MASK) == 0) {
 						ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
@@ -866,7 +870,7 @@ void ModuleBrowser::refresh(bool resetScroll) {
 			modelContainer->children.swap(s);
 			break;
 	}
-	
+
 
 	if (!search.empty()) {
 		std::map<Widget*, float> scores;

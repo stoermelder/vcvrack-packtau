@@ -29,6 +29,16 @@ struct MbHideBrandsItem : MenuItem {
 	}
 };
 
+struct MbSearchDescriptionsItem : MenuItem {
+	void onAction(const event::Action& e) override {
+		Mb::v1::searchDescriptions ^= true;
+	}
+	void step() override {
+		rightText = Mb::v1::searchDescriptions ? "✔" : "";
+		MenuItem::step();
+	}
+};
+
 struct MbExportItem : MenuItem {
 	void onAction(const event::Action& e) override {
 		Mb::exportSettingsDialog();
@@ -75,6 +85,7 @@ struct MenuBarExButton : MenuButton {
 		menu->addChild(construct<MbModeItem>(&MenuItem::text, "Mode \"v0.6\"", &MbModeItem::mode, (int)Mb::MODE::V06));
 		menu->addChild(construct<MbModeItem>(&MenuItem::text, "Mode \"v1 mod\"", &MbModeItem::mode, (int)Mb::MODE::V1));
 		menu->addChild(construct<MbHideBrandsItem>(&MenuItem::text, "\"v1 mod\": Hide brand list"));
+		menu->addChild(construct<MbSearchDescriptionsItem>(&MenuItem::text, "\"v1 mod\": Search descriptions"));
 		menu->addChild(construct<MbExportItem>(&MenuItem::text, "Export favorites & hidden"));
 		menu->addChild(construct<MbImportItem>(&MenuItem::text, "Import favorites & hidden"));
 		menu->addChild(construct<MbResetUsageDataItem>(&MenuItem::text, "Reset usage data"));
