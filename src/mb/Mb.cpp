@@ -254,13 +254,16 @@ BrowserOverlay::BrowserOverlay() {
 }
 
 BrowserOverlay::~BrowserOverlay() {
-	APP->scene->moduleBrowser = mbWidgetBackup;
-	APP->scene->addChild(mbWidgetBackup);
+	// Undo only when no other module messed with the browser
+	if (APP->scene->moduleBrowser == this) {
+		APP->scene->moduleBrowser = mbWidgetBackup;
+		APP->scene->addChild(mbWidgetBackup);
 
-	if (parent) {
-		APP->scene->removeChild(this);
+		if (parent) {
+			APP->scene->removeChild(this);
+		}
 	}
-	
+
 	pluginSettings.mbV1zoom = v1::modelBoxZoom;
 	pluginSettings.mbV1sort = v1::modelBoxSort;
 	pluginSettings.mbV1hideBrands = v1::hideBrands;

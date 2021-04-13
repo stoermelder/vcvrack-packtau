@@ -19,7 +19,7 @@ void init(rack::Plugin* p) {
 
 	pluginSettings.readFromJson();
 
-	// MenuBarEx::init();
+	MenuBarEx::init();
 }
 
 
