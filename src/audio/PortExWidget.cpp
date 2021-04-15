@@ -1,5 +1,5 @@
 #include "plugin.hpp"
-#include "AudioWidget.hpp"
+#include "PortExWidget.hpp"
 #include <ui/MenuItem.hpp>
 #include <ui/Menu.hpp>
 #include <helpers.hpp>
@@ -9,7 +9,7 @@ using namespace ui;
 
 namespace AudioEx {
 
-struct AudioDriverItem : ui::MenuItem {
+struct PortExDriverItem : ui::MenuItem {
 	PortEx* port;
 	int driverId;
 	void onAction(const event::Action& e) override {
@@ -17,7 +17,7 @@ struct AudioDriverItem : ui::MenuItem {
 	}
 };
 
-struct AudioDriverChoice : LedDisplayChoice {
+struct PortExDriverChoice : LedDisplayChoice {
 	PortEx* port;
 	void onAction(const event::Action& e) override {
 		if (!port)
@@ -26,7 +26,7 @@ struct AudioDriverChoice : LedDisplayChoice {
 		ui::Menu* menu = createMenu();
 		menu->addChild(createMenuLabel("Audio driver"));
 		{
-			AudioDriverItem* item = new AudioDriverItem;
+			PortExDriverItem* item = new PortExDriverItem;
 			item->port = port;
 			item->driverId = -1;
 			item->text = "(no driver)";
@@ -34,7 +34,7 @@ struct AudioDriverChoice : LedDisplayChoice {
 			menu->addChild(item);
 		}
 		for (int driverId : port->getDriverIds()) {
-			AudioDriverItem* item = new AudioDriverItem;
+			PortExDriverItem* item = new PortExDriverItem;
 			item->port = port;
 			item->driverId = driverId;
 			item->text = port->getDriverName(driverId);
@@ -57,7 +57,7 @@ struct AudioDriverChoice : LedDisplayChoice {
 };
 
 
-struct AudioDeviceItem : ui::MenuItem {
+struct PortExDeviceItem : ui::MenuItem {
 	PortEx* port;
 	int deviceId;
 	int offset;
@@ -66,7 +66,7 @@ struct AudioDeviceItem : ui::MenuItem {
 	}
 };
 
-struct AudioDeviceChoice : LedDisplayChoice {
+struct PortExDeviceChoice : LedDisplayChoice {
 	PortEx* port;
 	/** Prevents devices with a ridiculous number of channels from being displayed */
 	int maxTotalChannels = 128;
@@ -79,7 +79,7 @@ struct AudioDeviceChoice : LedDisplayChoice {
 		menu->addChild(createMenuLabel("Audio device"));
 		int deviceCount = port->getDeviceCount();
 		{
-			AudioDeviceItem* item = new AudioDeviceItem;
+			PortExDeviceItem* item = new PortExDeviceItem;
 			item->port = port;
 			item->deviceId = -1;
 			item->text = "(No device)";
@@ -89,7 +89,7 @@ struct AudioDeviceChoice : LedDisplayChoice {
 		for (int deviceId = 0; deviceId < deviceCount; deviceId++) {
 			int channels = std::min(maxTotalChannels, port->getDeviceChannels(deviceId));
 			for (int offset = 0; offset < channels; offset += port->maxChannels) {
-				AudioDeviceItem* item = new AudioDeviceItem;
+				PortExDeviceItem* item = new PortExDeviceItem;
 				item->port = port;
 				item->deviceId = deviceId;
 				item->offset = offset;
@@ -114,7 +114,7 @@ struct AudioDeviceChoice : LedDisplayChoice {
 };
 
 
-struct AudioSampleRateItem : ui::MenuItem {
+struct PortExSampleRateItem : ui::MenuItem {
 	PortEx* port;
 	int sampleRate;
 	void onAction(const event::Action& e) override {
@@ -122,7 +122,7 @@ struct AudioSampleRateItem : ui::MenuItem {
 	}
 };
 
-struct AudioSampleRateChoice : LedDisplayChoice {
+struct PortExSampleRateChoice : LedDisplayChoice {
 	PortEx* port;
 	void onAction(const event::Action& e) override {
 		if (!port)
@@ -135,7 +135,7 @@ struct AudioSampleRateChoice : LedDisplayChoice {
 			menu->addChild(createMenuLabel("(Locked by device)"));
 		}
 		for (int sampleRate : sampleRates) {
-			AudioSampleRateItem* item = new AudioSampleRateItem;
+			PortExSampleRateItem* item = new PortExSampleRateItem;
 			item->port = port;
 			item->sampleRate = sampleRate;
 			item->text = string::f("%g kHz", sampleRate / 1000.0);
@@ -155,7 +155,7 @@ struct AudioSampleRateChoice : LedDisplayChoice {
 };
 
 
-struct AudioBlockSizeItem : ui::MenuItem {
+struct PortExBlockSizeItem : ui::MenuItem {
 	PortEx* port;
 	int blockSize;
 	void onAction(const event::Action& e) override {
@@ -163,7 +163,7 @@ struct AudioBlockSizeItem : ui::MenuItem {
 	}
 };
 
-struct AudioBlockSizeChoice : LedDisplayChoice {
+struct PortExBlockSizeChoice : LedDisplayChoice {
 	PortEx* port;
 	void onAction(const event::Action& e) override {
 		if (!port)
@@ -176,7 +176,7 @@ struct AudioBlockSizeChoice : LedDisplayChoice {
 			menu->addChild(createMenuLabel("(Locked by device)"));
 		}
 		for (int blockSize : blockSizes) {
-			AudioBlockSizeItem* item = new AudioBlockSizeItem;
+			PortExBlockSizeItem* item = new PortExBlockSizeItem;
 			item->port = port;
 			item->blockSize = blockSize;
 			float latency = (float) blockSize / port->sampleRate * 1000.0;
@@ -196,7 +196,7 @@ struct AudioBlockSizeChoice : LedDisplayChoice {
 	}
 };
 
-struct AudioBufferFillDisplay : LedDisplayChoice {
+struct PortExBufferFillDisplay : LedDisplayChoice {
 	PortEx* port;
 	void step() override {
 		if (port) {
@@ -208,12 +208,12 @@ struct AudioBufferFillDisplay : LedDisplayChoice {
 	}
 };
 
-void AudioWidget::setAudioPort(PortEx* port) {
+void PortExWidget::setAudioPort(PortEx* port) {
 	clearChildren();
 
 	math::Vec pos;
 
-	AudioDriverChoice* driverChoice = createWidget<AudioDriverChoice>(pos);
+	PortExDriverChoice* driverChoice = createWidget<PortExDriverChoice>(pos);
 	driverChoice->port = port;
 	driverChoice->textOffset = math::Vec(6.f, 14.7f);
 	driverChoice->box.size = mm2px(math::Vec(box.size.x, 7.5f));
@@ -227,7 +227,7 @@ void AudioWidget::setAudioPort(PortEx* port) {
 	this->driverSeparator->box.pos = driverChoice->box.getBottomLeft();
 	addChild(this->driverSeparator);
 
-	AudioDeviceChoice* deviceChoice = createWidget<AudioDeviceChoice>(pos);
+	PortExDeviceChoice* deviceChoice = createWidget<PortExDeviceChoice>(pos);
 	deviceChoice->port = port;
 	deviceChoice->textOffset = math::Vec(6.f, 14.7f);
 	deviceChoice->box.size = mm2px(math::Vec(box.size.x, 7.5f));
@@ -242,7 +242,7 @@ void AudioWidget::setAudioPort(PortEx* port) {
 	deviceSeparator->box.pos = deviceChoice->box.getBottomLeft();
 	this->addChild(this->deviceSeparator);
 
-	AudioSampleRateChoice* sampleRateChoice = createWidget<AudioSampleRateChoice>(pos);
+	PortExSampleRateChoice* sampleRateChoice = createWidget<PortExSampleRateChoice>(pos);
 	sampleRateChoice->port = port;
 	sampleRateChoice->textOffset = math::Vec(6.f, 14.7f);
 	sampleRateChoice->box.size = mm2px(math::Vec(20.f, 7.5f));
@@ -257,7 +257,7 @@ void AudioWidget::setAudioPort(PortEx* port) {
 	this->sampleRateSeparator->box.pos.y = sampleRateChoice->box.pos.y;
 	addChild(this->sampleRateSeparator);
 
-	AudioBlockSizeChoice* bufferSizeChoice = createWidget<AudioBlockSizeChoice>(pos);
+	PortExBlockSizeChoice* bufferSizeChoice = createWidget<PortExBlockSizeChoice>(pos);
 	bufferSizeChoice->port = port;
 	bufferSizeChoice->textOffset = math::Vec(6.f, 14.7f);
 	bufferSizeChoice->box.size = mm2px(math::Vec(16.f, 7.5f));
@@ -272,7 +272,7 @@ void AudioWidget::setAudioPort(PortEx* port) {
 	this->bufferSizeSeparator->box.pos.y = bufferSizeChoice->box.pos.y;
 	addChild(this->bufferSizeSeparator);
 
-	AudioBufferFillDisplay* bufferFillDisplay = createWidget<AudioBufferFillDisplay>(pos);
+	PortExBufferFillDisplay* bufferFillDisplay = createWidget<PortExBufferFillDisplay>(pos);
 	bufferFillDisplay->port = port;
 	bufferFillDisplay->textOffset = math::Vec(6.f, 14.7f);
 	bufferFillDisplay->box.size = mm2px(math::Vec(16.f, 7.5f));

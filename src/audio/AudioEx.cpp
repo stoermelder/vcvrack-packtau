@@ -1,6 +1,6 @@
 #include "../plugin.hpp"
 #include "PortEx.hpp"
-#include "AudioWidget.hpp"
+#include "PortExWidget.hpp"
 #include <audio.hpp>
 
 namespace AudioEx {
@@ -237,7 +237,7 @@ struct AudioEx16Widget : ModuleWidget {
 			addChild(createLightCentered<TinyLight<GreenLight>>(Vec(xOut - 9.8f + i * 32.2f, 314.5f), module, TAudioInterface::OUTPUT_LIGHT + i * 4 + 3));
 		}
 
-		AudioEx::AudioWidget* audioWidget = createWidget<AudioEx::AudioWidget>(Vec(13.f, 36.f));
+		AudioEx::PortExWidget* audioWidget = createWidget<AudioEx::PortExWidget>(Vec(13.f, 36.f));
 		audioWidget->box.size = Vec(154.f, 67.f);
 		audioWidget->setAudioPort(module ? &module->port : NULL);
 		addChild(audioWidget);

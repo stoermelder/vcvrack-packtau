@@ -9,7 +9,7 @@ using namespace app;
 
 namespace AudioEx {
 
-struct AudioWidget : LedDisplay {
+struct PortExWidget : LedDisplay {
 	LedDisplayChoice* driverChoice;
 	LedDisplaySeparator* driverSeparator;
 	LedDisplayChoice* deviceChoice;
