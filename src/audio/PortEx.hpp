@@ -37,8 +37,12 @@ struct PortEx : rack::audio::Port {
 	void abortStream() {
 		setChannels(0, 0);
 
-		if (rtAudio) {
-			if (rtAudio->isStreamOpen()) {
+		if (driverId == -1) {
+			return;
+		}
+
+		if (rtAudio && driverId >= 0) {
+			if (rtAudio->isStreamRunning()) {
 				INFO("Stopping RtAudio stream %d", deviceId);
 				try {
 					rtAudio->closeStream();
@@ -46,10 +50,13 @@ struct PortEx : rack::audio::Port {
 				catch (RtAudioError& e) {
 					WARN("Failed to stop RtAudio stream %s", e.what());
 				}
+				onCloseStream();
 				return;
 			}
 		}
-		rack::audio::Port::closeStream();
+		else {
+			rack::audio::Port::closeStream();
+		}
 	}
 
 	virtual size_t getBufferFillStatus() { 
@@ -57,7 +64,7 @@ struct PortEx : rack::audio::Port {
 	}
 
 	void fromJsonEx(json_t* rootJ) {
-		closeStream();
+		abortStream();
 
 		json_t* driverJ = json_object_get(rootJ, "driver");
 		if (driverJ)

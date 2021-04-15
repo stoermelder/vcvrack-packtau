@@ -2,6 +2,8 @@
 #include "PortEx.hpp"
 #include "PortExWidget.hpp"
 #include <audio.hpp>
+#include <mutex>
+#include <condition_variable>
 
 namespace AudioEx {
 
@@ -11,7 +13,12 @@ struct AudioExPort : PortEx {
 	dsp::DoubleRingBuffer<dsp::Frame<AUDIO_INPUTS>, (1 << 15)> inputBuffer;
 	// Audio thread consumes, engine thread produces
 	dsp::DoubleRingBuffer<dsp::Frame<AUDIO_OUTPUTS>, (1 << 15)> outputBuffer;
+
+	std::mutex audioMutex;
+	std::condition_variable audioCv;
 	bool active = false;
+
+	std::chrono::duration<int64_t, std::milli> timeout = std::chrono::milliseconds(100);
 
 	~AudioExPort() {
 		setDeviceIdEx(-1, 0);
@@ -36,19 +43,25 @@ struct AudioExPort : PortEx {
 			}
 		}
 
-		if (numOutputs > 0 && (int)outputBuffer.size() >= frames) {
-			// Consume audio block
-			for (int i = 0; i < frames; i++) {
-				dsp::Frame<AUDIO_OUTPUTS> f = outputBuffer.shift();
-				for (int j = 0; j < numOutputs; j++) {
-					output[numOutputs * i + j] = clamp(f.samples[j], -1.f, 1.f);
+		if (numOutputs > 0) {
+			std::unique_lock<std::mutex> lock(audioMutex);
+			auto cond = [&] {
+				return (outputBuffer.size() >= (size_t)frames);
+			};
+			if (audioCv.wait_for(lock, timeout, cond)) {
+				// Consume audio block
+				for (int i = 0; i < frames; i++) {
+					dsp::Frame<AUDIO_OUTPUTS> f = outputBuffer.shift();
+					for (int j = 0; j < numOutputs; j++) {
+						output[numOutputs * i + j] = clamp(f.samples[j], -1.f, 1.f);
+					}
 				}
 			}
-		}
-		else {
-			// Timed out, fill output with zeros
-			std::memset(output, 0, frames * numOutputs * sizeof(float));
-			// DEBUG("Audio Interface Port underflow");
+			else {
+				// Timed out, fill output with zeros
+				std::memset(output, 0, frames * numOutputs * sizeof(float));
+				// DEBUG("Audio Interface Port underflow");
+			}
 		}
 	}
 
@@ -59,6 +72,7 @@ struct AudioExPort : PortEx {
 	void onCloseStream() override {
 		inputBuffer.clear();
 		outputBuffer.clear();
+		active = false;
 	}
 
 	void onChannelsChange() override {
@@ -193,7 +207,6 @@ struct AudioExModule : Module {
 
 	void onReset() override {
 		port.setDriverIdEx(-1);
-		port.setDeviceIdEx(-1, 0);
 	}
 }; // struct AudioExModule
 

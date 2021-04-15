@@ -44,7 +44,7 @@ struct PortExDriverChoice : LedDisplayChoice {
 	}
 	void step() override {
 		text = (box.size.x >= 200.0) ? "Driver: " : "";
-		std::string driverName = (port && port->driverId >= 0) ? port->getDriverName(port->driverId) : "";
+		std::string driverName = (port && port->driverId != -1) ? port->getDriverName(port->driverId) : "";
 		if (driverName != "") {
 			text += driverName;
 			color.a = 1.f;
