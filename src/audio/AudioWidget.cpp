@@ -25,6 +25,14 @@ struct AudioDriverChoice : LedDisplayChoice {
 
 		ui::Menu* menu = createMenu();
 		menu->addChild(createMenuLabel("Audio driver"));
+		{
+			AudioDriverItem* item = new AudioDriverItem;
+			item->port = port;
+			item->driverId = -1;
+			item->text = "(no driver)";
+			item->rightText = CHECKMARK(item->driverId == port->driverId);
+			menu->addChild(item);
+		}
 		for (int driverId : port->getDriverIds()) {
 			AudioDriverItem* item = new AudioDriverItem;
 			item->port = port;
@@ -36,7 +44,7 @@ struct AudioDriverChoice : LedDisplayChoice {
 	}
 	void step() override {
 		text = (box.size.x >= 200.0) ? "Driver: " : "";
-		std::string driverName = (port) ? port->getDriverName(port->driverId) : "";
+		std::string driverName = (port && port->driverId >= 0) ? port->getDriverName(port->driverId) : "";
 		if (driverName != "") {
 			text += driverName;
 			color.a = 1.f;
@@ -192,7 +200,7 @@ struct AudioBufferFillDisplay : LedDisplayChoice {
 	PortEx* port;
 	void step() override {
 		if (port) {
-			text = string::f("%d", port->getBbufferFillStatus());
+			text = string::f("%d", port->getBufferFillStatus());
 		}
 		else {
 			text = "0";

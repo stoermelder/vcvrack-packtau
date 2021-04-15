@@ -1,5 +1,5 @@
 #include "../plugin.hpp"
-#include "Port.hpp"
+#include "PortEx.hpp"
 #include "AudioWidget.hpp"
 #include <audio.hpp>
 
@@ -14,7 +14,6 @@ struct AudioExPort : PortEx {
 	bool active = false;
 
 	~AudioExPort() {
-		// Close stream here before destructing AudioInterfacePort, so the mutexes are still valid when waiting to close.
 		setDeviceIdEx(-1, 0);
 	}
 
@@ -53,7 +52,7 @@ struct AudioExPort : PortEx {
 		}
 	}
 
-	size_t getBbufferFillStatus() override {
+	size_t getBufferFillStatus() override {
 		return inputBuffer.size();
 	}
 
@@ -105,7 +104,7 @@ struct AudioExModule : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		port.maxChannels = std::max(AUDIO_OUTPUTS, AUDIO_INPUTS);
 		lightDivider.setDivision(1024);
-		onSampleRateChange();
+		onReset();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -189,11 +188,12 @@ struct AudioExModule : Module {
 
 	void dataFromJson(json_t* rootJ) override {
 		json_t* audioJ = json_object_get(rootJ, "audio");
-		port.fromJson(audioJ);
+		port.fromJsonEx(audioJ);
 	}
 
 	void onReset() override {
-		port.setDeviceId(-1, 0);
+		port.setDriverIdEx(-1);
+		port.setDeviceIdEx(-1, 0);
 	}
 }; // struct AudioExModule
 
