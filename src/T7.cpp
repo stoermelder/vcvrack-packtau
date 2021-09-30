@@ -27,7 +27,7 @@ void T7CableEvent::addCable(CableWidget* cw) {
 }
 
 CableWidget* T7CableEvent::findCable(ModuleWidget* outputModule, ModuleWidget* inputModule) {
-	for (PortWidget* outPort : outputModule->outputs) {
+	for (PortWidget* outPort : outputModule->getOutputs()) {
 		if (outPort->portId == outPd.portId) {
 			for (CableWidget* cw : APP->scene->rack->getCablesOnPort(outPort)) {
 				if (cw->inputPort->portId == inPd.portId) {
@@ -64,18 +64,13 @@ void T7CableToggleEvent::execute() {
 	}
 	else {
 		// Add new cable
-		CableWidget* cw = new CableWidget;
-		if (cableColor != "") {
-			cw->color = color::fromHexString(cableColor);
-		}
-		for (PortWidget* outPort : outputModule->outputs) {
-			if (outPort->portId == outPd.portId) {
-				// Output port found
-				cw->setOutput(outPort);
-				break;
-			}
-		}
-		for (PortWidget* inPort : inputModule->inputs) {
+		engine::Cable* c = new engine::Cable;
+		c->outputId = outPd.portId;
+		c->outputModule = outputModule->module;
+		c->inputId = inPd.portId;
+		c->inputModule = inputModule->module;
+
+		for (PortWidget* inPort : inputModule->getInputs()) {
 			if (inPort->portId == inPd.portId) {
 				// Input port found
 				if (APP->scene->rack->getCablesOnPort(inPort).size() > 0) {
@@ -89,18 +84,22 @@ void T7CableToggleEvent::execute() {
 						break;
 					}
 				}
-				cw->setInput(inPort);
 				break;
 			}
 		}
-		if (cw->isComplete()) {
-			addCable(cw);
-			log("cable patched");
+
+		APP->engine->addCable(c);
+
+		CableWidget* cw = new CableWidget;
+		cw->setCable(c);
+		if (cableColor != "") {
+			cw->color = color::fromHexString(cableColor);
 		}
-		else {
-			delete cw;
-			log("cable incomplete");
-		}
+		addCable(cw);
+		log("cable patched");
+
+		// TODO: incomplete cables?
+		// log("cable incomplete");
 	}
 	// ---
 }
@@ -127,18 +126,13 @@ void T7CableAddEvent::execute() {
 	}
 	else {
 		// Add new cable
-		CableWidget* cw = new CableWidget;
-		if (cableColor != "") {
-			cw->color = color::fromHexString(cableColor);
-		}
-		for (PortWidget* outPort : outputModule->outputs) {
-			if (outPort->portId == outPd.portId) {
-				// Output port found
-				cw->setOutput(outPort);
-				break;
-			}
-		}
-		for (PortWidget* inPort : inputModule->inputs) {
+		engine::Cable* c = new engine::Cable;
+		c->outputId = outPd.portId;
+		c->outputModule = outputModule->module;
+		c->inputId = inPd.portId;
+		c->inputModule = inputModule->module;
+
+		for (PortWidget* inPort : inputModule->getInputs()) {
 			if (inPort->portId == inPd.portId) {
 				// Input port found
 				if (APP->scene->rack->getCablesOnPort(inPort).size() > 0) {
@@ -152,18 +146,22 @@ void T7CableAddEvent::execute() {
 						break;
 					}
 				}
-				cw->setInput(inPort);
 				break;
 			}
 		}
-		if (cw->isComplete()) {
-			addCable(cw);
-			log("cable patched");
+
+		APP->engine->addCable(c);
+
+		CableWidget* cw = new CableWidget;
+		cw->setCable(c);
+		if (cableColor != "") {
+			cw->color = color::fromHexString(cableColor);
 		}
-		else {
-			delete cw;
-			log("cable incomplete");
-		}
+		addCable(cw);
+		log("cable patched");
+
+		// TODO: incomplete cables?
+		// log("cable incomplete");
 	}
 	// ---
 }

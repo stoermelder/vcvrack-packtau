@@ -1,6 +1,6 @@
 {
 	"slug": "Stoermelder-PackTau",
-	"version": "1.0.0-dev",
+	"version": "2.0.0-dev",
 	"license": "GPL-3.0-only",
 	"author": "Benjamin Dill",
 	"name": "PackTau",
@@ -52,12 +52,6 @@
 			"name": "RF",
 			"description": "Module for Rack-folding",
 			"tags": ["Utility", "Expander"]
-		},
-		{
-			"slug": "AudioEx16",
-			"name": "AUDIO-EX-16",
-			"description": "Experimental module for non-blocking usage of multiple audio-devices in Rack v1. Do NOT use multiple ASIO devices the same time.",
-			"tags": ["External"]
 		}
 	]
 }

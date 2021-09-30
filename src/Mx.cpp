@@ -146,27 +146,27 @@ struct MxWidget : ModuleWidget {
 
 		if (module->leftClickPress) {
 			module->leftClickPress = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
 		}
 		if (module->leftClickRelease) {
 			module->leftClickRelease = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
 		}
 		if (module->middleClickPress) {
 			module->middleClickPress = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
 		}
 		if (module->middleClickRelease) {
 			module->middleClickRelease = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
 		}
 		if (module->rightClickPress) {
 			module->rightClickPress = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
 		}
 		if (module->rightClickRelease) {
 			module->rightClickRelease = false;
-			APP->event->handleButton(APP->window->mousePos,  GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
+			APP->event->handleButton(APP->scene->getMousePos(),  GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
 		}
 	}
 };

@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include <queue>
 
 namespace StoermelderPackTau {
 namespace Rf {
@@ -186,7 +187,6 @@ struct RfWidget : ModuleWidget {
 			}
 		}
 
-		fixBrokenFramebuffer();
 		module->modulePos.clear();
 
 		for (std::tuple<PortWidget*, Vec> t : module->portPos) {
@@ -316,23 +316,6 @@ struct RfWidget : ModuleWidget {
 		for (std::tuple<ModuleWidget*, int, Vec, Vec> t : module->modulePos) {
 			RfWidget* mw = dynamic_cast<RfWidget*>(std::get<0>(t));
 			if (mw) mw->updatePortPos(delta);
-		}
-	}
-
-	void fixBrokenFramebuffer() {
-		std::queue<Widget*> q;
-		for (std::tuple<ModuleWidget*, int, Vec, Vec> t : module->modulePos) {
-			q.push(std::get<0>(t));
-		}
-
-		while (!q.empty()) {
-			Widget* w = q.front();
-			q.pop();
-			FramebufferWidget* fb = dynamic_cast<FramebufferWidget*>(w);
-			if (fb) fb->fbSize = Vec();
-			for (Widget* c : w->children) {
-				q.push(c);
-			}
 		}
 	}
 };

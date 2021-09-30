@@ -53,7 +53,7 @@ struct PmContainer : widget::Widget {
 	struct DisconnectAllItem : MenuItem {
 		PortWidget* pw;
 		void onAction(const event::Action& e) override {
-			std::list<CableWidget*> c = APP->scene->rack->getCablesOnPort(pw);
+			std::vector<CableWidget*> c = APP->scene->rack->getCablesOnPort(pw);
 
 			history::ComplexAction* h = new history::ComplexAction;
 			h->name = "remove all cables";
@@ -82,7 +82,7 @@ struct PmContainer : widget::Widget {
 	struct RotateItem : MenuItem {
 		PortWidget* pw;
 		void onAction(const event::Action& e) override {
-			Widget* cc = APP->scene->rack->cableContainer;
+			Widget* cc = APP->scene->rack->getCableContainer();
 			std::list<Widget*>::iterator it;
 			for (it = cc->children.begin(); it != cc->children.end(); it++) {
 				CableWidget* cw = dynamic_cast<CableWidget*>(*it);
@@ -154,7 +154,7 @@ struct PmContainer : widget::Widget {
 
 			e.consume(this);
 			Menu* menu = createMenu();
-			if (pw->type == PortWidget::Type::OUTPUT) {
+			if (pw->type == engine::Port::OUTPUT) {
 				menu->addChild(createMenuLabel("Output-port"));
 				menu->addChild(construct<ChannelsItem>(&MenuItem::text, "Output channels", &ChannelsItem::pw, pw));
 				if (c == 1) menu->addChild(construct<GotoInputItem>(&MenuItem::text, "Go to input-port", &GotoInputItem::pw, pw));

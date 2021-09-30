@@ -176,7 +176,7 @@ void exportSettingsDialog() {
 	});
 
 	std::string pathStr = path;
-	std::string extension = string::filenameExtension(string::filename(pathStr));
+	std::string extension = system::getExtension(system::getFilename(pathStr));
 	if (extension.empty()) {
 		pathStr += ".json";
 	}
@@ -240,7 +240,7 @@ BrowserOverlay::BrowserOverlay() {
 	v1::searchDescriptions = pluginSettings.mbV1searchDescriptions;
 	moduleBrowserFromJson(pluginSettings.mbModelsJ);
 
-	mbWidgetBackup = APP->scene->moduleBrowser;
+	mbWidgetBackup = APP->scene->browser;
 	mbWidgetBackup->hide();
 	APP->scene->removeChild(mbWidgetBackup);
 
@@ -250,14 +250,14 @@ BrowserOverlay::BrowserOverlay() {
 	mbV1 = new v1::ModuleBrowser;
 	addChild(mbV1);
 
-	APP->scene->moduleBrowser = this;
+	APP->scene->browser = this;
 	APP->scene->addChild(this);
 }
 
 BrowserOverlay::~BrowserOverlay() {
 	// Undo only when no other module messed with the browser
-	if (APP->scene->moduleBrowser == this) {
-		APP->scene->moduleBrowser = mbWidgetBackup;
+	if (APP->scene->browser == this) {
+		APP->scene->browser = mbWidgetBackup;
 		APP->scene->addChild(mbWidgetBackup);
 
 		if (parent) {

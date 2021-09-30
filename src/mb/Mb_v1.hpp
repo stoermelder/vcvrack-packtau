@@ -1,6 +1,5 @@
 #include "Mb.hpp"
 #include <plugin.hpp>
-#include <ui/MarginLayout.hpp>
 
 namespace Mb {
 namespace v1 {
@@ -39,7 +38,7 @@ struct ModuleBrowser : widget::OpaqueWidget {
 	ui::Label* modelLabel;
 	ui::ChoiceButton* modelSortChoice;
 	ui::Slider* modelZoomSlider;
-	ui::MarginLayout* modelMargin;
+	Widget* modelMargin;
 	ui::SequentialLayout* modelContainer;
 
 	std::string search;

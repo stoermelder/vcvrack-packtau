@@ -128,7 +128,7 @@ struct ExitWidget : ModuleWidget {
 			system::createDirectory(dir);
 		}
 		else {
-			dir = string::directory(module->path);
+			dir = system::getDirectory(module->path);
 		}
 
 		osdialog_filters* filters = osdialog_filters_parse(PATCH_FILTERS.c_str());

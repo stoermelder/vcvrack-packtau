@@ -1,4 +1,6 @@
+.gitignore
 plugin.dll
+build
+dist
+
 .vscode/*
-build/src/*
-dist/*

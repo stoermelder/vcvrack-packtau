@@ -31,7 +31,7 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 	s += model->name;
 	s += " ";
 	s += model->slug;
-	for (int tagId : model->tags) {
+	for (int tagId : model->tagIds) {
 		// Add all aliases of a tag
 		for (const std::string& alias : rack::tag::tagAliases[tagId]) {
 			s += " ";
@@ -70,8 +70,8 @@ static bool isModelVisible(plugin::Model* model, const std::string& search, cons
 	// Filter tag
 	if (tagId.size() > 0) {
 			for (auto t : tagId) {
-			auto it = std::find(model->tags.begin(), model->tags.end(), t);
-			if (it == model->tags.end())
+			auto it = std::find(model->tagIds.begin(), model->tagIds.end(), t);
+			if (it == model->tagIds.end())
 				return false;
 		}
 	}
@@ -116,8 +116,12 @@ static bool isModelHidden(plugin::Model* model) {
 }
 
 static ModuleWidget* chooseModel(plugin::Model* model) {
-	// Create module
-	ModuleWidget* moduleWidget = model->createModuleWidget();
+	// Create Module
+	engine::Module* addedModule = model->createModule();
+	APP->engine->addModule(addedModule);
+
+	// Create ModuleWidget
+	ModuleWidget* moduleWidget = model->createModuleWidget(addedModule);
 	assert(moduleWidget);
 	APP->scene->rack->addModuleAtMouse(moduleWidget);
 
@@ -128,7 +132,7 @@ static ModuleWidget* chooseModel(plugin::Model* model) {
 	APP->history->push(h);
 
 	// Hide Module Browser
-	APP->scene->moduleBrowser->hide();
+	APP->scene->browser->hide();
 
 	// Update usage data
 	modelUsageTouch(model);
@@ -217,18 +221,18 @@ struct ModelBox : widget::OpaqueWidget {
 	}
 
 	void createPreview() {
+		zoomWidget = new widget::ZoomWidget;
+		previewWidget->addChild(zoomWidget);
+
 		previewFb = new widget::FramebufferWidget;
 		if (math::isNear(APP->window->pixelRatio, 1.0)) {
 			// Small details draw poorly at low DPI, so oversample when drawing to the framebuffer
 			previewFb->oversample = 2.0;
 		}
-		previewWidget->addChild(previewFb);
+		zoomWidget->addChild(previewFb);
 
-		zoomWidget = new widget::ZoomWidget;
-		previewFb->addChild(zoomWidget);
-
-		ModuleWidget* moduleWidget = model->createModuleWidgetNull();
-		zoomWidget->addChild(moduleWidget);
+		ModuleWidget* moduleWidget = model->createModuleWidget(NULL);
+		previewFb->addChild(moduleWidget);
 		// Save the width, used for correct width of blank before rendered
 		modelBoxWidth = moduleWidget->box.size.x;
 
@@ -237,16 +241,9 @@ struct ModelBox : widget::OpaqueWidget {
 
 	void sizePreview() {
 		zoomWidget->setZoom(modelBoxZoom);
-
-		zoomWidget->box.size.x = modelBoxWidth * modelBoxZoom;
-		zoomWidget->box.size.y = RACK_GRID_HEIGHT * modelBoxZoom;
-		previewWidget->box.size.x = std::ceil(zoomWidget->box.size.x);
-		previewWidget->box.size.y = std::ceil(zoomWidget->box.size.y);
-		box.size = previewWidget->box.size;
-
-		// Not sure how to do this correctly but works for now
-		previewFb->fbBox.size = previewWidget->box.size;
-		previewFb->dirty = true;
+		previewFb->setDirty();
+		box.size.x = modelBoxWidth * modelBoxZoom;
+		box.size.y = RACK_GRID_HEIGHT * modelBoxZoom;
 	}
 
 	void deletePreview() {
@@ -414,11 +411,12 @@ struct ModelBox : widget::OpaqueWidget {
 		text += " " + model->name;
 		// Tags
 		text += "\nTags: ";
-		for (size_t i = 0; i < model->tags.size(); i++) {
+		int i = 0;
+		for (int tagId : model->tagIds) {
 			if (i > 0)
 				text += ", ";
-			int tagId = model->tags[i];
 			text += rack::tag::tagAliases[tagId][0];
+			i++;
 		}
 		// Description
 		if (model->description != "") {
@@ -456,7 +454,7 @@ struct SortChoice : ui::ChoiceButton {
 		struct SortItem : ui::MenuItem {
 			ModuleBrowserSort sort;
 			void onAction(const event::Action& e) override {
-				ModuleBrowser* browser = APP->scene->moduleBrowser->getFirstDescendantOfType<ModuleBrowser>();
+				ModuleBrowser* browser = APP->scene->browser->getFirstDescendantOfType<ModuleBrowser>();
 				modelBoxSort = (int)sort;
 				browser->refresh(true);
 			}
@@ -493,11 +491,13 @@ struct FavoriteItem : ui::MenuItem {
 		browser->favorites ^= true;
 		browser->refresh(true);
 	}
+	/*
 	void step() override {
 		MenuItem::step();
 		ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 		active = browser->favorites;
 	}
+	*/
 };
 
 
@@ -510,11 +510,13 @@ struct BrandItem : ui::MenuItem {
 			browser->brand = text;
 		browser->refresh(true);
 	}
+	/*
 	void step() override {
 		MenuItem::step();
 		ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 		active = (browser->brand == text);
 	}
+	*/
 };
 
 
@@ -528,18 +530,20 @@ struct TagItem : ui::MenuItem {
 			browser->tagId.insert(tagId);
 		browser->refresh(true);
 	}
+	/*
 	void step() override {
 		MenuItem::step();
 		ModuleBrowser* browser = getAncestorOfType<ModuleBrowser>();
 		active = (browser->tagId.find(tagId) != browser->tagId.end());
 	}
+	*/
 };
 
 
 struct BrowserSearchField : ui::TextField {
 	void step() override {
 		// Steal focus when step is called
-		APP->event->setSelected(this);
+		APP->event->setSelectedWidget(this);
 		TextField::step();
 	}
 
@@ -609,7 +613,7 @@ struct BrowserSearchField : ui::TextField {
 	}
 
 	void onHide(const event::Hide& e) override {
-		APP->event->setSelected(NULL);
+		APP->event->setSelectedWidget(NULL);
 		ui::TextField::onHide(e);
 	}
 
@@ -731,6 +735,8 @@ void BrowserSidebar::step() {
 
 
 ModuleBrowser::ModuleBrowser() {
+	const float margin = 10;
+
 	sidebar = new BrowserSidebar;
 	sidebar->box.size.x = 200;
 	addChild(sidebar);
@@ -751,11 +757,11 @@ ModuleBrowser::ModuleBrowser() {
 	modelScroll = new ui::ScrollWidget;
 	addChild(modelScroll);
 
-	modelMargin = new rack::ui::MarginLayout;
-	modelMargin->margin = math::Vec(10, 10);
+	modelMargin = new widget::Widget;
 	modelScroll->container->addChild(modelMargin);
 
 	modelContainer = new ui::SequentialLayout;
+	modelContainer->margin = math::Vec(margin, 0);
 	modelContainer->spacing = math::Vec(10, 10);
 	modelMargin->addChild(modelContainer);
 
@@ -772,21 +778,20 @@ ModuleBrowser::ModuleBrowser() {
 }
 
 void ModuleBrowser::step() {
+	const float margin = 10;
 	if (!visible) return;
 	box = parent->box.zeroPos().grow(math::Vec(-70, -70));
 
 	sidebar->box.size.y = box.size.y;
-
 	modelLabel->box.pos = sidebar->box.getTopRight().plus(math::Vec(5, 5));
-
 	modelZoomSlider->box.pos = Vec(box.size.x - modelZoomSlider->box.size.x - 5, 5);
-
 	modelSortChoice->box.pos =  Vec(modelZoomSlider->box.pos.x - modelSortChoice->box.size.x - 20, 5);
 
 	modelScroll->box.pos = sidebar->box.getTopRight().plus(math::Vec(0, 30));
 	modelScroll->box.size = box.size.minus(modelScroll->box.pos);
 	modelMargin->box.size.x = modelScroll->box.size.x;
-	modelMargin->box.size.y = modelContainer->getChildrenBoundingBox().size.y + 2 * modelMargin->margin.y;
+	modelMargin->box.size.y = modelContainer->getChildrenBoundingBox().size.y + 2 * margin;
+	modelContainer->box.size.x = modelMargin->box.size.x - margin;
 
 	OpaqueWidget::step();
 }

@@ -16,7 +16,5 @@ extern Model* modelPm;
 extern Model* modelRf;
 extern Model* modelExit;
 
-extern Model* modelAudioEx16;
-
 bool registerSingleton(std::string name, ModuleWidget* mw);
 bool unregisterSingleton(std::string name, ModuleWidget* mw);

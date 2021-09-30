@@ -15,11 +15,9 @@ void init(rack::Plugin* p) {
 	p->addModel(modelRf);
 	p->addModel(modelExit);
 
-	p->addModel(modelAudioEx16);
-
 	pluginSettings.readFromJson();
 
-	MenuBarEx::init();
+	//MenuBarEx::init();
 }
 
 

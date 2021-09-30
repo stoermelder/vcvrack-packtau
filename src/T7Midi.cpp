@@ -37,7 +37,7 @@ struct T7MidiModule : Module {
 		std::vector<T7MidiMessage>* queue = reinterpret_cast<std::vector<T7MidiMessage>*>(leftExpander.producerMessage);
 
 		midi::Message msg;
-		while (midiInput.shift(&msg)) {
+		while (midiInput.tryPop(&msg, args.frame)) {
 			T7MidiMessage m;
 			m.driverId = midiInput.driverId;
 			m.deviceId = midiInput.deviceId;

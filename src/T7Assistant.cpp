@@ -55,13 +55,13 @@ struct DebugDisplay : LedDisplayTextField {
 		std::string t = "";
 		t += string::f("moduleId:\n%i\n", lastModuleId);
 		t += "input ports:\n";
-		for (PortWidget* p : mw->inputs) {
+		for (PortWidget* p : mw->getInputs()) {
 			t += string::f("portId: %i", p->portId);
 			if (p->portId == lastPortId && p->type == lastPortType) t += " clicked";
 			t += "\n";
 		}
 		t += "output ports:\n";
-		for (PortWidget* p : mw->outputs) {
+		for (PortWidget* p : mw->getOutputs()) {
 			t += string::f("portId: %i", p->portId);
 			if (p->portId == lastPortId && p->type == lastPortType) t += " clicked";
 			t += "\n";
