@@ -80,7 +80,7 @@ struct T7MidiWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		
-		MidiWidget* midiWidget = createWidget<MidiWidget>(Vec(14.0f, 46.5f));
+		MidiDisplay* midiWidget = createWidget<MidiDisplay>(Vec(14.0f, 46.5f));
 		midiWidget->box.size = Vec(122.0f, 83.0f);
 		midiWidget->setMidiPort(module ? &module->midiInput : NULL);
 		addChild(midiWidget);
