@@ -73,10 +73,7 @@ struct PmContainer : widget::Widget {
 		PortWidget* pw;
 		void onAction(const event::Action& e) override {
 			CableWidget* cw = APP->scene->rack->getTopCable(pw);
-			int cid = APP->scene->rack->getNextCableColorId();
-			cw->color = settings::cableColors[++cid];
-			cid %= settings::cableColors.size();
-			APP->scene->rack->setNextCableColorId(cid);
+			cw->color = APP->scene->rack->getNextCableColor();
 		}
 	};
 
