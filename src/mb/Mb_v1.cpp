@@ -20,6 +20,14 @@ bool searchDescriptions = false;
 
 // Static functions
 
+static float fuzzyScore(const std::string& s, const std::string& query) {
+	size_t pos = s.find(query);
+	if (pos == std::string::npos)
+		return 0.f;
+
+	return (float)(query.size() + 1) / (s.size() + 1);
+}
+
 static float modelScore(plugin::Model* model, const std::string& search) {
 	if (search.empty())
 		return 1.f;
@@ -42,7 +50,7 @@ static float modelScore(plugin::Model* model, const std::string& search) {
 		s += " ";
 		s += model->description;
 	}
-	float score = string::fuzzyScore(string::lowercase(s), string::lowercase(search));
+	float score = fuzzyScore(string::lowercase(s), string::lowercase(search));
 	return score;
 }
 
