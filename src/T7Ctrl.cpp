@@ -414,7 +414,7 @@ struct T7CtrlModule : Module {
 };
 
 
-struct MidiDisplay : LedDisplayTextField {
+struct MidiTextField : LedDisplayTextField {
 	T7CtrlModule* module;
 	const int MAX = 600;
 
@@ -433,6 +433,16 @@ struct MidiDisplay : LedDisplayTextField {
 	}
 };
 
+struct MidiDisplay : LedDisplay {
+	void setModule(T7CtrlModule* module) {
+		MidiTextField* textField = createWidget<MidiTextField>(Vec(0, 0));
+		textField->box.size = box.size;
+		textField->multiline = true;
+		textField->module = module;
+		addChild(textField);
+	}
+};
+
 
 struct T7CtrlWidget : ModuleWidget {
 	T7CtrlModule* module;
@@ -446,11 +456,10 @@ struct T7CtrlWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		MidiDisplay* textField1 = createWidget<MidiDisplay>(Vec(14.4f, 46.5f));
-		textField1->module = module;
-		textField1->box.size = Vec(211.1f, 277.5f);
-		textField1->multiline = true;
-		addChild(textField1);
+		MidiDisplay* midiDisplay = createWidget<MidiDisplay>(Vec(14.4f, 46.5f));
+		midiDisplay->setModule(module);
+		midiDisplay->box.size = Vec(211.1f, 277.5f);
+		addChild(midiDisplay);
 	}
 
 	void appendContextMenu(Menu* menu) override {

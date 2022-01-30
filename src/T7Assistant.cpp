@@ -24,9 +24,9 @@ struct T7AssistantModule : Module {
 };
 
 
-struct DebugDisplay : LedDisplayTextField {
+struct DebugTextField : LedDisplayTextField {
 	T7AssistantModule* module;
-	int lastModuleId;
+	int64_t lastModuleId;
 	int lastPortType;
 	int lastPortId;
 
@@ -53,7 +53,7 @@ struct DebugDisplay : LedDisplayTextField {
 		}
 
 		std::string t = "";
-		t += string::f("moduleId:\n%i\n", lastModuleId);
+		t += string::f("moduleId:\n%lli\n", lastModuleId);
 		t += "input ports:\n";
 		for (PortWidget* p : mw->getInputs()) {
 			t += string::f("portId: %i", p->portId);
@@ -71,6 +71,16 @@ struct DebugDisplay : LedDisplayTextField {
 	}
 };
 
+struct DebugDisplay : LedDisplay {
+	void setModule(T7AssistantModule* module) {
+		DebugTextField* textField = createWidget<DebugTextField>(Vec(0, 0));
+		textField->box.size = box.size;
+		textField->multiline = true;
+		textField->module = module;
+		addChild(textField);
+	}
+};
+
 struct T7AssistantWidget : ModuleWidget {
 	T7AssistantModule* module;
 	T7AssistantWidget(T7AssistantModule* module) {
@@ -83,11 +93,10 @@ struct T7AssistantWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		
-		DebugDisplay* textField2 = createWidget<DebugDisplay>(Vec(14.4f, 46.5f));
-		textField2->module = module;
-		textField2->box.size = Vec(150.4f, 277.5f);
-		textField2->multiline = true;
-		addChild(textField2);
+		DebugDisplay* debugDisplay = createWidget<DebugDisplay>(Vec(14.4f, 46.5f));
+		debugDisplay->setModule(module);
+		debugDisplay->box.size = Vec(150.4f, 277.5f);
+		addChild(debugDisplay);
 	}
 };
 

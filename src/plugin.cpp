@@ -1,4 +1,3 @@
-#include "plugin.hpp"
 #include "MenuBarEx.hpp"
 
 Plugin* pluginInstance;
@@ -17,6 +16,9 @@ void init(rack::Plugin* p) {
 
 	pluginSettings.readFromJson();
 
+	// At this point no context is known and it is impossible to initialize the menubar extension
+	// as this initialization is needed for multiple windows.
+	// I don't know how to hook this up at the moment...
 	//MenuBarEx::init();
 }
 

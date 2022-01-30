@@ -26,7 +26,7 @@ struct RfModule : Module {
 	/** [Stored to JSON] */
 	std::list<std::tuple<PortWidget*, Vec>> portPos;
 
-	std::list<std::tuple<int, int, Vec>> modulePosTemp;
+	std::list<std::tuple<int64_t, int, Vec>> modulePosTemp;
 
 	dsp::SchmittTrigger modeTrigger;
 	dsp::ClockDivider lightDivider;
@@ -74,7 +74,7 @@ struct RfModule : Module {
 		size_t modulePosIdx;
 		json_t* modulePos1J;
 		json_array_foreach(modulePosJ, modulePosIdx, modulePos1J) {
-			int moduleId = json_integer_value(json_object_get(modulePos1J, "moduleId"));
+			int64_t moduleId = json_integer_value(json_object_get(modulePos1J, "moduleId"));
 			int i = json_integer_value(json_object_get(modulePos1J, "i"));
 
 			json_t* posJ = json_object_get(modulePos1J, "pos");
@@ -273,8 +273,8 @@ struct RfWidget : ModuleWidget {
 
 	void load() {
 		if (module->modulePosTemp.size() > 0) {
-			for (std::tuple<int, int, Vec> t : module->modulePosTemp) {
-				int moduleId = std::get<0>(t);
+			for (std::tuple<int64_t, int, Vec> t : module->modulePosTemp) {
+				int64_t moduleId = std::get<0>(t);
 				int i = std::get<1>(t);
 				Vec pos = std::get<2>(t);
 

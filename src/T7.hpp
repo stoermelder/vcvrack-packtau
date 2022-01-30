@@ -34,7 +34,7 @@ struct T7MidiMessage : T7Message {
 
 struct T7Driver {
 	struct PortDescriptor {
-		int moduleId = -1;
+		int64_t moduleId = -1;
 		int portType = -1;
 		int portId = -1;
 	};
