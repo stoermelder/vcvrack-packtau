@@ -1,4 +1,3 @@
-#include "plugin.hpp"
 #include "T7.hpp"
 
 namespace T7 {

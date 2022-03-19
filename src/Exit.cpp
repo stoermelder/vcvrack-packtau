@@ -1,5 +1,8 @@
-#include "plugin.hpp"
+#include "MenuBarEx.hpp"
 #include "UiSync.hpp"
+#include "plugin.hpp"
+
+#include <rack.hpp>
 #include <patch.hpp>
 #include <osdialog.h>
 

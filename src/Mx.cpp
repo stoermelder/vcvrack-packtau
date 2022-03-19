@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "MenuBarEx.hpp"
 
 namespace Mx {
 
@@ -43,6 +44,8 @@ struct MxModule : Module {
 		configParam(PARAM_ACTIVE, 0.f, 1.f, 0.f, "Active");
 		onReset();
 		params[PARAM_ACTIVE].setValue(0.f);
+
+		MenuBarEx::init();
 	}
 
 	void process(const ProcessArgs& args) override {

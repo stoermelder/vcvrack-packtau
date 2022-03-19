@@ -1,5 +1,6 @@
-#include "plugin.hpp"
 #include "T7.hpp"
+#include "plugin.hpp"
+#include "MenuBarEx.hpp"
 
 namespace T7 {
 
@@ -20,6 +21,7 @@ struct T7AssistantModule : Module {
 	T7AssistantModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		onReset();
+		MenuBarEx::init();
 	}
 };
 
@@ -92,7 +94,7 @@ struct T7AssistantWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		
+
 		DebugDisplay* debugDisplay = createWidget<DebugDisplay>(Vec(14.4f, 46.5f));
 		debugDisplay->setModule(module);
 		debugDisplay->box.size = Vec(150.4f, 277.5f);

@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "T7.hpp"
+#include "MenuBarEx.hpp"
 #include "osdialog.h"
 
 
@@ -300,6 +301,8 @@ struct T7CtrlModule : Module {
 		auto d2 = new MidiCcTwoMessageGate<T7CtrlModule>();
 		d2->module = this;
 		driver.push_back(d2);
+
+		MenuBarEx::init();
 	}
 
 	~T7CtrlModule() {
@@ -500,7 +503,7 @@ struct T7CtrlWidget : ModuleWidget {
 		menu->addChild(new MenuSeparator());
 		menu->addChild(construct<ReplaceCableItem>(&MenuItem::text, "Replace input cables", &ReplaceCableItem::module, module));
 	}
-	
+
 	void exampleMapping() {
 		json_t* driverJ = module->driverMappingExampleJson();
 		DEFER({

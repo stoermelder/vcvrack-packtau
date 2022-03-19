@@ -1,5 +1,6 @@
-#include "plugin.hpp"
 #include "T7.hpp"
+#include "plugin.hpp"
+#include "MenuBarEx.hpp"
 
 namespace T7 {
 
@@ -27,6 +28,8 @@ struct T7MidiModule : Module {
 		onReset();
 		leftExpander.consumerMessage = &consumerMessage;
 		leftExpander.producerMessage = &producerMessage;
+
+		MenuBarEx::init();
 	}
 
 	void onReset() override {
@@ -79,7 +82,7 @@ struct T7MidiWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		
+
 		MidiDisplay* midiWidget = createWidget<MidiDisplay>(Vec(14.0f, 46.5f));
 		midiWidget->box.size = Vec(122.0f, 83.0f);
 		midiWidget->setMidiPort(module ? &module->midiInput : NULL);
