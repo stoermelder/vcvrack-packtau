@@ -6,6 +6,7 @@ using namespace rack;
 extern StoermelderSettings pluginSettings;
 
 extern Plugin* pluginInstance;
+extern bool menuBarInitialzed;
 
 extern Model* modelT7Ctrl;
 extern Model* modelT7Midi;
