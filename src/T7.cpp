@@ -16,6 +16,7 @@ void T7CableEvent::removeCable(CableWidget* cw) {
 	h->setCable(cw);
 	APP->history->push(h);
 	APP->scene->rack->removeCable(cw);
+	delete cw;
 }
 
 void T7CableEvent::addCable(CableWidget* cw) {
