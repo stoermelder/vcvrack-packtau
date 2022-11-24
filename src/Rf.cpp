@@ -279,8 +279,10 @@ struct RfWidget : ModuleWidget {
 				Vec pos = std::get<2>(t);
 
 				ModuleWidget* mw = APP->scene->rack->getModule(moduleId);
-				module->modulePos.push_back(std::make_tuple(mw, i, pos, mw->box.size));
-				collapseModule(mw, i);
+				if (mw) {
+					module->modulePos.push_back(std::make_tuple(mw, i, pos, mw->box.size));
+					collapseModule(mw, i);
+				}
 			}
 			module->modulePosTemp.clear();
 		}
