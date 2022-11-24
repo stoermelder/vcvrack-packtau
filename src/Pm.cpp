@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "settings.hpp"
+#include "MenuBarEx.hpp"
 
 namespace StoermelderPackTau {
 namespace Pm {
@@ -22,6 +23,7 @@ struct PmModule : Module {
 
 	PmModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+		MenuBarEx::init();
 	}
 };
 

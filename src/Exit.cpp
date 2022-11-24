@@ -1,5 +1,8 @@
-#include "plugin.hpp"
+#include "MenuBarEx.hpp"
 #include "UiSync.hpp"
+#include "plugin.hpp"
+
+#include <rack.hpp>
 #include <patch.hpp>
 #include <osdialog.h>
 
@@ -73,6 +76,8 @@ struct ExitModule : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		sync = new ExitSync;
 		UiSync::registerHandle(sync);
+
+		MenuBarEx::init();
 	}
 
 	~ExitModule() {

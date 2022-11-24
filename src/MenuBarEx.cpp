@@ -95,29 +95,27 @@ struct MenuBarExButton : MenuButton {
 		UiSync::step();
 		MenuButton::step();
 	}
+
+	MenuBarExButton() {
+		ui::SequentialLayout* layout = APP->scene->menuBar->getFirstDescendantOfType<ui::SequentialLayout>();
+
+		this->text = "Extras";
+		layout->addChild(this);
+
+		Mb::init();
+	}
 }; // struct MenuBarExButton
 
 
 void init() {
-	std::thread t([](){
-		while (!APP || !APP->scene || !APP->scene->menuBar) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		}
+	// Need context (via APP or contextGet()) to exist for menubar extension to work.
 
-		ui::SequentialLayout* layout = APP->scene->menuBar->getFirstDescendantOfType<ui::SequentialLayout>();
-
-		MenuBarExButton* menuBarExButton = new MenuBarExButton;
-		menuBarExButton->text = "Extras";
-		layout->addChild(menuBarExButton);
-		/*
-		auto it1 = layout->children.end()--;
-		auto it2 = it1--;
-		std::swap(it1, it2);
-		*/
-
-		Mb::init();
-	});
-	t.detach();
+	// Check if menu bar extension was already initialized.
+	if (!menuBarInitialzed) {
+		menuBarInitialzed = true;
+		// Probably a memory leak
+		new MenuBarExButton;
+	}
 }
 
 } // namespace MenuBarEx

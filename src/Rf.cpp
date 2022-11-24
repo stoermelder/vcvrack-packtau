@@ -1,5 +1,7 @@
 #include "plugin.hpp"
+#include "MenuBarEx.hpp"
 #include <queue>
+
 
 namespace StoermelderPackTau {
 namespace Rf {
@@ -34,6 +36,7 @@ struct RfModule : Module {
 	RfModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		lightDivider.setDivision(1024);
+		MenuBarEx::init();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -175,14 +178,14 @@ struct RfWidget : ModuleWidget {
 	void expand() {
 		for (std::tuple<ModuleWidget*, int, Vec, Vec> t : module->modulePos) {
 			ModuleWidget* mw = std::get<0>(t);
-			
+
 			Vec oldPos = mw->box.pos;
 			mw->box.pos = std::get<2>(t).plus(box.pos);
 			mw->box.size = std::get<3>(t);
 			mw->visible = true;
 
 			RfWidget* smw = dynamic_cast<RfWidget*>(mw);
-			if (smw) {	
+			if (smw) {
 				smw->updatePortPos(oldPos.minus(mw->box.pos).plus(mw->box.pos.minus(box.pos)));
 			}
 		}
@@ -236,7 +239,7 @@ struct RfWidget : ModuleWidget {
 	void collapseModule(ModuleWidget* mw, int i) {
 		int o = 536870; // a random magic number, be aware
 		Vec p = Vec(o / (int)RACK_GRID_WIDTH, o / (int)RACK_GRID_HEIGHT).plus(Vec(i, module->id));
-		
+
 		Vec oldPos = mw->box.pos;
 		mw->visible = false;
 		mw->box.pos = p.round().mult(RACK_GRID_SIZE);
@@ -290,7 +293,7 @@ struct RfWidget : ModuleWidget {
 
 	void step() override {
 		ModuleWidget::step();
-		if (!module) return; 
+		if (!module) return;
 
 		if (firstRun) {
 			load();
