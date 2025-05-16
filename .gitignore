@@ -1,6 +1,5 @@
+.vscode/*
 .gitignore
 plugin.dll
 build
 dist
-
-.vscode/*

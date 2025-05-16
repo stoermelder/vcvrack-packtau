@@ -1,6 +1,6 @@
 {
 	"slug": "Stoermelder-PackTau",
-	"version": "2.0.0-dev",
+	"version": "2.1.dev",
 	"license": "GPL-3.0-only",
 	"author": "Benjamin Dill",
 	"name": "PackTau",
@@ -39,19 +39,21 @@
 			"slug": "Pm",
 			"name": "PM",
 			"description": "Provides a context menu on cable-ports",
-			"tags": ["Utility"]
+			"tags": ["Utility"],
+			"disabled": true
 		},
 		{
 			"slug": "Exit",
 			"name": "EXIT",
-			"description": "",
+			"description": "Experimental module for loading a patch by CV trigger",
 			"tags": ["Utility"]
 		},
 		{
 			"slug": "Rf",
 			"name": "RF",
 			"description": "Module for Rack-folding",
-			"tags": ["Utility", "Expander"]
+			"tags": ["Utility", "Expander"],
+			"disabled": true
 		}
 	]
 }
