@@ -23,12 +23,6 @@ struct ExitModule : Module {
 		NUM_LIGHTS
 	};
 
-	std::string path;
-
-	dsp::SchmittTrigger loadTrigger;
-	dsp::SchmittTrigger loadSaveTrigger;
-	dsp::SchmittTrigger quitTrigger;
-
 	enum class WORK {
 		NONE,
 		LOAD,
@@ -36,8 +30,13 @@ struct ExitModule : Module {
 		QUIT
 	};
 
+	std::string path = "";
 	std::string workPath;
 	WORK workToDo = WORK::NONE;
+
+	dsp::SchmittTrigger loadTrigger;
+	dsp::SchmittTrigger loadSaveTrigger;
+	dsp::SchmittTrigger quitTrigger;
 
 	ExitModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -45,10 +44,14 @@ struct ExitModule : Module {
 
 	void process(const ProcessArgs &args) override {
 		if (inputs[INPUT_LOAD].isConnected() && loadTrigger.process(inputs[INPUT_LOAD].getVoltage())) {
-			trigger(WORK::LOAD, path);
+			if (path != "") {
+				trigger(WORK::LOAD, path);
+			}
 		}
 		if (inputs[INPUT_LOADSAVE].isConnected() && loadSaveTrigger.process(inputs[INPUT_LOADSAVE].getVoltage())) {
-			trigger(WORK::LOADSAVE, path);
+			if (path != "") {
+				trigger(WORK::LOADSAVE, path);
+			}
 		}
 		if (inputs[INPUT_QUIT].isConnected() && quitTrigger.process(inputs[INPUT_QUIT].getVoltage())) {
 			trigger(WORK::QUIT);
