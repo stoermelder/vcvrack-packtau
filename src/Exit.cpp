@@ -1,5 +1,4 @@
 #include "plugin.hpp"
-#include "UiSync.hpp"
 #include <patch.hpp>
 #include <osdialog.h>
 
@@ -20,6 +19,7 @@ struct ExitModule : Module {
 		NUM_OUTPUTS
 	};
 	enum LightIds {
+		LIGHT_ACTIVE,
 		NUM_LIGHTS
 	};
 
@@ -36,59 +36,28 @@ struct ExitModule : Module {
 		QUIT
 	};
 
-	struct ExitSync : UiSync::UiSyncHandle {
-		std::string workPath;
-		WORK workToDo = WORK::NONE;
-
-		void step() override {
-			switch (workToDo) {
-				case WORK::NONE:
-					break;
-				case WORK::LOAD:
-					APP->patch->load(workPath);
-					APP->patch->path = workPath;
-					APP->history->setSaved();
-					break;
-				case WORK::LOADSAVE:
-					APP->patch->save(APP->patch->path);
-					APP->patch->load(workPath);
-					APP->patch->path = workPath;
-					APP->history->setSaved();
-					break;
-				case WORK::QUIT:
-					APP->window->close();
-					break;
-			}
-		}
-
-		void trigger(WORK workToDo, std::string workPath = "") {
-			this->workPath = workPath;
-			this->workToDo = workToDo;
-		}
-	};
-
-	ExitSync* sync;
+	std::string workPath;
+	WORK workToDo = WORK::NONE;
 
 	ExitModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		sync = new ExitSync;
-		UiSync::registerHandle(sync);
-	}
-
-	~ExitModule() {
-		UiSync::unregisterHandle(sync);
 	}
 
 	void process(const ProcessArgs &args) override {
 		if (inputs[INPUT_LOAD].isConnected() && loadTrigger.process(inputs[INPUT_LOAD].getVoltage())) {
-			sync->trigger(WORK::LOAD, path);
+			trigger(WORK::LOAD, path);
 		}
 		if (inputs[INPUT_LOADSAVE].isConnected() && loadSaveTrigger.process(inputs[INPUT_LOADSAVE].getVoltage())) {
-			sync->trigger(WORK::LOADSAVE, path);
+			trigger(WORK::LOADSAVE, path);
 		}
 		if (inputs[INPUT_QUIT].isConnected() && quitTrigger.process(inputs[INPUT_QUIT].getVoltage())) {
-			sync->trigger(WORK::QUIT);
+			trigger(WORK::QUIT);
 		}
+	}
+
+	void trigger(WORK workToDo, std::string workPath = "") {
+		this->workPath = workPath;
+		this->workToDo = workToDo;
 	}
 
 	json_t* dataToJson() override {
@@ -107,18 +76,73 @@ struct ExitModule : Module {
 };
 
 
+struct ExitDummyWidget : TransparentWidget {
+	static ExitDummyWidget* instance;
+	ExitModule* module = nullptr;
+
+	void step() override {
+		if (module != nullptr) {
+			switch (module->workToDo) {
+				case ExitModule::WORK::NONE:
+					break;
+				case ExitModule::WORK::LOAD:
+					APP->patch->load(module->workPath);
+					APP->patch->path = module->workPath;
+					APP->history->setSaved();
+					break;
+				case ExitModule::WORK::LOADSAVE:
+					APP->patch->save(APP->patch->path);
+					APP->patch->load(module->workPath);
+					APP->patch->path = module->workPath;
+					APP->history->setSaved();
+					break;
+				case ExitModule::WORK::QUIT:
+					APP->window->close();
+					break;
+			}
+		}
+		TransparentWidget::step();
+	}
+}; // struct ExitDummyWidget
+
+ExitDummyWidget* ExitDummyWidget::instance = nullptr;
+
+
 struct ExitWidget : ModuleWidget {
 	const std::string PATCH_FILTERS = "VCV Rack patch (.vcv):vcv";
 	ExitModule* module;
+	bool active = false;
 
 	ExitWidget(ExitModule* module) {
 		setModule(module);
 		this->module = module;
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Exit.svg")));
 
+		addChild(createLightCentered<TinyLight<WhiteLight>>(Vec(22.5f, 330.0f), module, ExitModule::LIGHT_ACTIVE));
+
 		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 211.8f), module, ExitModule::INPUT_LOAD));
 		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 255.4f), module, ExitModule::INPUT_LOADSAVE));
 		addInput(createInputCentered<PJ301MPort>(Vec(22.5f, 298.9f), module, ExitModule::INPUT_QUIT));
+
+		initExitDummyWidget();
+		if (module) {
+			active = registerSingleton("Exit", this);
+			ExitDummyWidget::instance->module = module;
+		}
+	}
+
+	~ExitWidget() {
+		if (module && active) {
+			unregisterSingleton("Exit", this);
+			ExitDummyWidget::instance->module = nullptr;
+		}
+	}
+
+	void step() override {
+		if (module) {
+			module->lights[ExitModule::LIGHT_ACTIVE].setBrightness(active);
+		}
+		ModuleWidget::step();
 	}
 
 	void selectFileDialog() {
@@ -168,6 +192,14 @@ struct ExitWidget : ModuleWidget {
 			ui::MenuLabel* modelLabel = new ui::MenuLabel;
 			modelLabel->text = module->path;
 			menu->addChild(modelLabel);
+		}
+	}
+
+	void initExitDummyWidget() {
+		if (ExitDummyWidget::instance == nullptr) {
+			ui::SequentialLayout* layout = APP->scene->menuBar->getFirstDescendantOfType<ui::SequentialLayout>();
+			ExitDummyWidget::instance = new ExitDummyWidget;
+			layout->addChild(ExitDummyWidget::instance);
 		}
 	}
 };
