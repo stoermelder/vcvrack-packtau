@@ -130,7 +130,9 @@ struct ExitWidget : ModuleWidget {
 		initExitDummyWidget();
 		if (module) {
 			active = registerSingleton("Exit", this);
-			ExitDummyWidget::instance->module = module;
+			if (active) {
+				ExitDummyWidget::instance->module = module;
+			}
 		}
 	}
 
