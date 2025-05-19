@@ -13,5 +13,5 @@ extern Model* modelPm;
 extern Model* modelRf;
 extern Model* modelExit;
 
-bool registerSingleton(std::string name, ModuleWidget* mw);
-bool unregisterSingleton(std::string name, ModuleWidget* mw);
+bool registerSingleton(std::string name, Widget* mw);
+bool unregisterSingleton(std::string name, Widget* mw);

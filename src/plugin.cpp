@@ -16,19 +16,19 @@ void init(rack::Plugin* p) {
 }
 
 
-std::map<std::string, ModuleWidget*> singletons;
+std::map<std::tuple<std::string, Context*>, Widget*> singletons;
 
-bool registerSingleton(std::string name, ModuleWidget* mw) {
-	auto it = singletons.find(name);
+bool registerSingleton(std::string name, Widget* mw) {
+	auto it = singletons.find(std::make_tuple(name, APP));
 	if (it == singletons.end()) {
-		singletons[name] = mw;
+		singletons[std::make_tuple(name, APP)] = mw;
 		return true;
 	}
 	return false;
 }
 
-bool unregisterSingleton(std::string name, ModuleWidget* mw) {
-	auto it = singletons.find(name);
+bool unregisterSingleton(std::string name, Widget* mw) {
+	auto it = singletons.find(std::make_tuple(name, APP));
 	if (it != singletons.end() && it->second == mw) {
 		singletons.erase(it);
 		return true;
