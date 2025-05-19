@@ -80,10 +80,6 @@ void T7CableToggleEvent::execute() {
 						CableWidget* cw1 = APP->scene->rack->getCablesOnPort(inPort).front();
 						removeCable(cw1);
 					}
-					else {
-						log("input port occupied");
-						break;
-					}
 				}
 				break;
 			}
@@ -141,10 +137,6 @@ void T7CableAddEvent::execute() {
 					if (replaceInputCable) {
 						CableWidget* cw1 = APP->scene->rack->getCablesOnPort(inPort).front();
 						removeCable(cw1);
-					}
-					else {
-						log("input port occupied");
-						break;
 					}
 				}
 				break;
