@@ -103,15 +103,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, build-mac]
     steps:
+      - name: Delete Nightly release
+        run: |
+          git fetch --tags
+          hub release delete Nightly
+          git push --delete origin Nightly
       - uses: actions/download-artifact@v8
         with:
           path: _artifacts
-      - name: Create Nighty release
+      - name: Create Nightly release
         uses: softprops/action-gh-release@v3
         with:
           name: Nightly
           tag_name: Nightly
           draft: false
           prerelease: true
+          body: |
+            ## Automatically generated build
+            This build is automatically generated every time I push my changes.
+            As such it is the latest version of the code and may be unstable, unusable, unsuitable for human consumption, and so on.
           files: |
             _artifacts/**/*.vcvplugin
