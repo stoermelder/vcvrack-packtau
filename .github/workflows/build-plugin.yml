@@ -103,6 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, build-mac]
     steps:
+      - uses: actions/checkout@v6
       - name: Delete Nightly release
         run: |
           git fetch --tags
