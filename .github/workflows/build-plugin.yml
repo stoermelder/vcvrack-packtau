@@ -103,12 +103,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, build-mac]
     steps:
-      - uses: actions/checkout@v6
       - name: Delete Nightly release
         run: |
-          git fetch --tags
-          hub release delete Nightly
-          git push --delete origin Nightly
+          gh release delete Nightly --cleanup-tag --yes
       - uses: actions/download-artifact@v8
         with:
           path: _artifacts
