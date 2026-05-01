@@ -110,7 +110,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Nightly
-          tag: Nightly
+          tag_name: Nightly
           draft: false
           prerelease: true
           files: |
